@@ -1,0 +1,125 @@
+name: release_develop_env
+
+on:
+  push:
+    branches:
+      - develop
+  repository_dispatch:
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Deploy CockroachDB
+        env:
+          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+        working-directory: ./cockroachdb/dev
+        run: |
+          terraform init
+          terraform apply \
+            -auto-approve \
+            -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
+            -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
+            -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
+          SQL_HOST=$(terraform output sql_dns | sed 's/"//g')
+          echo "::add-mask::$SQL_HOST"
+          DSN_BASE=$(echo 'postgres://<username>:<password>@<host>:26257/<database>?sslmode=verify-full' | sed "s/<username>/${{secrets.COCKROACH_SQL_USER_NAME_DEV}}/" | sed "s/<password>/${{secrets.COCKROACH_SQL_USER_PASSWORD_DEV}}/" | sed "s/<host>/$SQL_HOST/")
+          echo "::add-mask::$DSN_BASE"
+          CockroachDBDsnForArticle=$(echo $DSN_BASE | sed 's/<database>/article/')
+          echo "::add-mask::$CockroachDBDsnForArticle"
+          CockroachDBDsnForTag=$(echo $DSN_BASE | sed 's/<database>/tag/')
+          echo "::add-mask::$CockroachDBDsnForTag"
+          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
+          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
+
+      - name: Setup goose.
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Migration for Article DB
+        working-directory: ./cockroachdb/dev/migration/article
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgre
+          goose up
+
+      - name: Migration for Tag DB
+        working-directory: ./cockroachdb/dev/migration/tag
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgre
+          goose up
+
+      - name: Set up aws cli
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy AWS Network
+        working-directory: ./aws/network
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS VPC
+        working-directory: ./aws/vpc
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-vpc-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS ECR
+        working-directory: ./aws/ecr
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecr-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS DynamoDB
+        working-directory: ./aws/dynamodb
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-dynamodb-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS ECS
+        if: |
+          ${{ ! $(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
+              ! $(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
+              ! $(aws ssm get-parameters --names /blog/cicd/dev/blogapi/tag --output text --query Parameters[0].Value | grep -v "None")
+          }}
+        working-directory: ./aws/ecs
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            NewRelicAppNameForBlogAPI=blogapi-dev \
+            NewRelicAppNameForArticleService=blogapi-article-service-dev \
+            NewRelicAppNameForTagService=blogapi-tag-service-dev \
+            NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
+            --no-fail-on-empty-changeset \
+
+      - name: Deploy AWS API Gateway
+        if: |
+          ${{ ! $(aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep -v "None") }}
+        working-directory: ./aws/api-gateway
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset

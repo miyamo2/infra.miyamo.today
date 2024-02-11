@@ -1,4 +1,11 @@
 terraform {
+    cloud {
+      organization = "miyamo2-blog"
+
+      workspaces {
+        name = "blog-prod"
+      }
+  }
   required_providers {
     cockroach = {
       source  = "cockroachdb/cockroach"
