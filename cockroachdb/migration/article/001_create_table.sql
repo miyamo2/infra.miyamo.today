@@ -19,10 +19,13 @@ CREATE TABLE IF NOT EXISTS tags (
     FOREIGN KEY (article_id) REFERENCES articles(id),
     PRIMARY KEY (id, article_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_tags_article_id ON tags(article_id);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP INDEX IF EXISTS idx_tags_article_id;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS articles;
 -- +goose StatementEnd
