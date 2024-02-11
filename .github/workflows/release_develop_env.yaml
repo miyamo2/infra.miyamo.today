@@ -10,7 +10,7 @@ on:
 permissions: write-all
 
 jobs:
-  release:
+  release_develop_env:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -100,12 +100,13 @@ jobs:
 
       - name: Deploy AWS ECS
         if: |
-          ${{ ! $(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
-              ! $(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
-              ! $(aws ssm get-parameters --names /blog/cicd/dev/blogapi/tag --output text --query Parameters[0].Value | grep -v "None")
+          ${{ ! (aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
+              ! (aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -v "None") &&
+              ! (aws ssm get-parameters --names /blog/cicd/dev/blogapi/tag --output text --query Parameters[0].Value | grep -v "None")
           }}
         working-directory: ./aws/ecs
         run: |
+          if 
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
@@ -117,7 +118,7 @@ jobs:
 
       - name: Deploy AWS API Gateway
         if: |
-          ${{ ! $(aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep -v "None") }}
+          ${{ ! (aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep -v "None") }}
         working-directory: ./aws/api-gateway
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
