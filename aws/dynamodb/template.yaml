@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+
+Resources:
+  ArticleEvents:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ArticleEvents-${Env}
+      AttributeDefinitions:
+        - AttributeName: "ArticleId"
+          AttributeType: "S"
+        - AttributeName: "EventId"
+          AttributeType: "S"
+        - AttributeName: "Status" # Try, Confirm, Cancel
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "ArticleId"
+          KeyType: "HASH"
+        - AttributeName: "EventId"
+          KeyType: "RANGE"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      BillingMode: PROVISIONED
+      GlobalSecondaryIndexes:
+        - IndexName: "Status_ArticleId-Index"
+          KeySchema:
+            - AttributeName: "Status"
+              KeyType: "HASH"
+            - AttributeName: "ArticleId"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: "1"
+            WriteCapacityUnits: "1"
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  TagEvents:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub TagEvents-${Env}
+      AttributeDefinitions:
+        - AttributeName: "TagId"
+          AttributeType: "S"
+        - AttributeName: "EventId"
+          AttributeType: "S"
+        - AttributeName: "Status" # Try, Confirm, Cancel
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "TagId"
+          KeyType: "HASH"
+        - AttributeName: "EventId"
+          KeyType: "RANGE"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "1"
+        WriteCapacityUnits: "1"
+      BillingMode: PROVISIONED
+      GlobalSecondaryIndexes:
+        - IndexName: "Status_TagId-Index"
+          KeySchema:
+            - AttributeName: "Status"
+              KeyType: "HASH"
+            - AttributeName: "TagId"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "ALL"
+          ProvisionedThroughput:
+            ReadCapacityUnits: "1"
+            WriteCapacityUnits: "1"
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  SSMParameterArticleEventsTableName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/dynamodb/article-events/name
+      Type: "String"
+      Value: !Ref ArticleEvents
+      Description: "ArticleEvents TableName"
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterArticleEventsStream:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/dynamodb/article-events/stream
+      Type: "String"
+      Value: !GetAtt ArticleEvents.StreamArn
+      Description: "ArticleEvents Stream"
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterTagEventsTableName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/dynamodb/tag-events/name
+      Type: "String"
+      Value: !Ref TagEvents
+      Description: "TagEvents TableName"
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterTagEventsStream:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/dynamodb/tag-events/stream
+      Type: "String"
+      Value: !GetAtt TagEvents.StreamArn
+      Description: "TagEvents Stream"
+      Tags:
+        Environment: !Ref Env

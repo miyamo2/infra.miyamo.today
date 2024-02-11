@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/vpc/id
+  PublicSubnetOneId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/subnet/public/one/id
+  BlogAPIServiceSecurityGroup:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ec2/security-group/id
+  BlogAPIServiceDiscoveryServiceArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/service-discovery/blogapi/arn
+
+Resources:
+  BlogAPIAPIGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub blogapi-api-gateway-${Env}
+      ProtocolType: HTTP
+
+  BlogAPIAPIGatewaySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for API gateway
+      VpcId: !Ref VpcId
+
+  BlogAPIAPIGatewayVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: !Sub blogapi-${Env}-vpc-link
+      SecurityGroupIds:
+        - !Ref BlogAPIAPIGatewaySecurityGroup
+      SubnetIds:
+        - !Ref PublicSubnetOneId
+
+  BlogAPIAPIGatewayVpcLinkIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref BlogAPIAPIGateway
+      ConnectionId: !Ref BlogAPIAPIGatewayVpcLink
+      ConnectionType: VPC_LINK
+      IntegrationType: HTTP_PROXY
+      IntegrationUri: !Ref BlogAPIServiceDiscoveryServiceArn
+      PayloadFormatVersion: 1.0
+      IntegrationMethod: ANY
+      PassthroughBehavior: WHEN_NO_MATCH
+
+  BlogAPIAPIGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref BlogAPIAPIGateway
+      StageName: "$default"
+      AutoDeploy: true
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt BlogAPIAPIGatewayLogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
+          "caller":"$context.identity.caller",
+          "user":"$context.identity.user","requestTime":"$context.requestTime",
+          "routeKey":"$context.routeKey",
+          "status":"$context.status"}
+
+  BlogAPIAPIGatewayPOSTProxyPlusRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref BlogAPIAPIGateway
+      RouteKey: POST /{proxy+}
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+
+  BlogAPIAPIGatewayGETProxyPlusRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref BlogAPIAPIGateway
+      RouteKey: GET /{proxy+}
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+
+  BlogAPIAPIGatewayOPTIONSProxyPlusRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref BlogAPIAPIGateway
+      RouteKey: OPTIONS /{proxy+}
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+
+  BlogAPIAPIGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/api-gateway/${BlogAPIAPIGateway}"
+
+  BlogAPIServiceIngressFromAPIGateway:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref BlogAPIServiceSecurityGroup
+      IpProtocol: -1
+      SourceSecurityGroupId: !Ref BlogAPIAPIGatewaySecurityGroup
+
+Outputs:
+  BlogAPIUri:
+    Value: !GetAtt BlogAPIAPIGateway.ApiEndpoint
