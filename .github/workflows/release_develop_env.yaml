@@ -26,6 +26,7 @@ jobs:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
         working-directory: ./cockroachdb/dev
         run: |
+          export COCKROACH_API_KEY=${{ secrets.COCKROACH_API_KEY }}
           terraform init
           terraform apply \
             -lock=false \
