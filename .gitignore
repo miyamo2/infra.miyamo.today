@@ -32,6 +32,4 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-.idea/.gitignore
-.idea/blog-cloud-infra.iml
-.idea/modules.xml
+.idea/
