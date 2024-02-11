@@ -28,6 +28,7 @@ jobs:
         run: |
           terraform init
           terraform apply \
+            -lock=false \
             -auto-approve \
             -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
             -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
