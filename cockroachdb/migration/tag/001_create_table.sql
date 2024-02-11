@@ -10,27 +10,18 @@ CREATE TABLE IF NOT EXISTS tags (
 
 CREATE TABLE IF NOT EXISTS articles (
     id VARCHAR(26),
+    tag_id VARCHAR(144),
     title VARCHAR(255) NOT NULL,
 	thumbnail VARCHAR(524271),
 	created_at timestamp WITHOUT TIME ZONE NOT NULL,
 	updated_at timestamp WITHOUT TIME ZONE NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS tag_article_categoraization (
-    tag_id VARCHAR(144),
-    article_id VARCHAR(26),
-    created_at timestamp WITHOUT TIME ZONE NOT NULL,
-    updated_at timestamp WITHOUT TIME ZONE NOT NULL,
     FOREIGN KEY (tag_id) REFERENCES tags(id),
-    FOREIGN KEY (article_id) REFERENCES articles(id),
-    PRIMARY KEY (tag_id, article_id)
+    PRIMARY KEY (id, tag_id)
 );
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE IF EXISTS tag_article_categoraization;
 DROP TABLE IF EXISTS articles;
 DROP TABLE IF EXISTS tags;
 -- +goose StatementEnd
