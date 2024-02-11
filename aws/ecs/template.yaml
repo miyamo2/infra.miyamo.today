@@ -54,11 +54,11 @@ Parameters:
   NewRelicLicenseKey:
     NoEcho: true
     Type: String
-  CockroachDBDnsForArticle:
+  CockroachDBDsnForArticle:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /blog/cicd/dev/cockroachdb/dns/article
-  CockroachDBDnsForTag:
+  CockroachDBDsnForTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /blog/cicd/dev/cockroachdb/dns/tag
@@ -260,8 +260,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Sub blogapi-article-service-${Env}
           Environment:
-            - Name: COCKROACHDB_DNS
-              Value: !Ref CockroachDBDnsForArticle
+            - Name: COCKROACHDB_DSN
+              Value: !Ref CockroachDBDsnForArticle
             - Name: SERVICE_NAME
               Value: "ArticleService"
             - Name: NEW_RELIC_CONFIG_APP_NAME
@@ -380,8 +380,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: !Sub blogapi-tag-service-${Env}
           Environment:
-            - Name: COCKROACHDB_DNS
-              Value: !Ref CockroachDBDnsForTag
+            - Name: COCKROACHDB_DSN
+              Value: !Ref CockroachDBDsnForTag
             - Name: SERVICE_NAME
               Value: "TagService"
             - Name: NEW_RELIC_CONFIG_APP_NAME
