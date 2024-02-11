@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+
+Resources:
+  BlogAPIECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub blogapi-${Env}
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowPushPull"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:DescribeRepositories
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - ecr:BatchGetImage
+              - ecr:GetLifecyclePolicy
+              - ecr:GetLifecyclePolicyPreview
+              - ecr:ListTagsForResource
+              - ecr:DescribeImageScanFindings
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIArticleECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub blogapi-article-service-${Env}
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowPushPull"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:DescribeRepositories
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - ecr:BatchGetImage
+              - ecr:GetLifecyclePolicy
+              - ecr:GetLifecyclePolicyPreview
+              - ecr:ListTagsForResource
+              - ecr:DescribeImageScanFindings
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPITagECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub blogapi-tag-service-${Env}
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowPushPull"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:DescribeRepositories
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - ecr:BatchGetImage
+              - ecr:GetLifecyclePolicy
+              - ecr:GetLifecyclePolicyPreview
+              - ecr:ListTagsForResource
+              - ecr:DescribeImageScanFindings
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIBloggingEventECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub blogapi-blogging_event-service-${Env}
+      RepositoryPolicyText:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AllowPushPull"
+            Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:GetRepositoryPolicy
+              - ecr:DescribeRepositories
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - ecr:BatchGetImage
+              - ecr:GetLifecyclePolicy
+              - ecr:GetLifecyclePolicyPreview
+              - ecr:ListTagsForResource
+              - ecr:DescribeImageScanFindings
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  SSMParameterBlogAPIECRRepositoryName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/ecr/blogapi/name
+      Type: "String"
+      Value: !Ref BlogAPIECRRepository
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterBlogAPIArticleECRRepositoryName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-article-service/name
+      Type: "String"
+      Value: !Ref BlogAPIArticleECRRepository
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterBlogAPITagECRRepositoryName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-tag-service/name
+      Type: "String"
+      Value: !Ref BlogAPITagECRRepository
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterBlogAPIBloggingEventECRRepositoryName:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-blogging-event-service/name
+      Type: "String"
+      Value: !Ref BlogAPIBloggingEventECRRepository
+      Tags:
+        Environment: !Ref Env
