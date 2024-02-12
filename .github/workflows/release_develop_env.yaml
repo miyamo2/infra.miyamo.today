@@ -24,7 +24,7 @@ jobs:
       - name: Deploy CockroachDB
         env:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-        working-directory: ./cockroachdb/dev
+        working-directory: ./cockroachdb
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME_DEV }}" \
             -backend-config="key=state/terraform.tfstate"
