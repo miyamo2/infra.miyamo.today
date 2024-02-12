@@ -39,13 +39,13 @@ jobs:
             -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
             -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
             -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
-          SQL_HOST=$(terraform output sql_dns | sed 's/"//g')
+          SQL_HOST=$(terraform output sql_dns | sed -e 's/"//g')
           echo "::add-mask::$SQL_HOST"
-          DSN_BASE=$(echo 'postgres://<username>:<password>@<host>:26257/<database>?sslmode=verify-full' | sed "s/<username>/${{secrets.COCKROACH_SQL_USER_NAME_DEV}}/" | sed "s/<password>/${{secrets.COCKROACH_SQL_USER_PASSWORD_DEV}}/" | sed "s/<host>/$SQL_HOST/")
+          DSN_BASE=$(echo 'postgres://<username>:<password>@<host>:26257/<database>?sslmode=verify-full' | sed -e 's/<username>/${{secrets.COCKROACH_SQL_USER_NAME_DEV}}/' -e 's/<password>/${{secrets.COCKROACH_SQL_USER_PASSWORD_DEV}}/' -e "s/<host>/$SQL_HOST/")
           echo "::add-mask::$DSN_BASE"
-          CockroachDBDsnForArticle=$(echo $DSN_BASE | sed 's/<database>/article/')
+          CockroachDBDsnForArticle=$(echo $DSN_BASE | sed -e 's/<database>/article/')
           echo "::add-mask::$CockroachDBDsnForArticle"
-          CockroachDBDsnForTag=$(echo $DSN_BASE | sed 's/<database>/tag/')
+          CockroachDBDsnForTag=$(echo $DSN_BASE | sed -e 's/<database>/tag/')
           echo "::add-mask::$CockroachDBDsnForTag"
           aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
           aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
