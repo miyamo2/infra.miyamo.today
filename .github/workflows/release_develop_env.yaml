@@ -122,11 +122,11 @@ jobs:
         working-directory: ./aws/ecs
         run: |
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -q "None"
-          if [ $? -eq 0 ]; then; then exit 0; fi
+          if [ $? -eq 0 ]; then; then exit 0
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -q "None"
-          if [ $? -eq 0 ]; then exit 0; fi
+          if [ $? -eq 0 ]; then exit 0
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi/tag --output text --query Parameters[0].Value | grep -q "None"
-          if [ $? -eq 0 ]; then exit 0; fi
+          if [ $? -eq 0 ]; then exit 0
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
@@ -140,7 +140,7 @@ jobs:
         working-directory: ./aws/api-gateway
         run: |
           aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep -q "None"
-          if [ $? -eq 0 ]; then exit 0; fi
+          if [ $? -eq 0 ]; then exit 0
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
