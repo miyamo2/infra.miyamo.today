@@ -122,11 +122,11 @@ jobs:
         working-directory: ./aws/ecs
         run: |
           ARTICLE_REPO_TAG=$(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value)
-          if ["$ARTICLE_REPO_TAG" | grep -q "None"]; then exit 0; fi
+          if [echo $ARTICLE_REPO_TAG | grep -q "None"]; then exit 0; fi
           TAG_REPO_TAG=$(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value)
-          if ["$TAG_REPO_TAG" | grep -q "None"]; then exit 0; fi
+          if [echo $TAG_REPO_TAG | grep -q "None"]; then exit 0; fi
           BLOGAPI_REPO_TAG=$(aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi/tag --output text --query Parameters[0].Value)
-          if ["$BLOGAPI_REPO_TAG" | grep -q "None"]; then exit 0; fi
+          if [echo $BLOGAPI_REPO_TAG | grep -q "None"]; then exit 0; fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
@@ -140,7 +140,7 @@ jobs:
         working-directory: ./aws/api-gateway
         run: |
           SERVICE_DISCOVERTY_ARN=$(aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value)
-          if ["$SERVICE_DISCOVERTY_ARN" | grep -q "None"]; then exit 0; fi
+          if [echo $SERVICE_DISCOVERTY_ARN | grep -q "None"]; then exit 0; fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
