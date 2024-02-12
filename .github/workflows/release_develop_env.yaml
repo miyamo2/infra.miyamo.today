@@ -5,6 +5,10 @@ on:
     branches:
       - develop
   repository_dispatch:
+    types:
+      - update_blog-api_dev_ecr
+      - update_blog-api-article_dev_ecr
+      - update_blog-api-tag_dev_ecr
   workflow_dispatch:
 
 permissions: write-all
