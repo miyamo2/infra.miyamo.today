@@ -39,8 +39,9 @@ jobs:
             -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
             -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
             -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
-          SQL_HOST=$(terraform output sql_dns -json | jq '.sql_dns.value' | sed -e 's/"//g')
+          SQL_HOST=$(terraform output sql_dns)
           echo "::add-mask::$SQL_HOST"
+          SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
           echo "Replace hostname..."
           DSN_BASE="postgres://<username>:<password>@<host>:26257/<database>?sslmode=verify-full"
           DSN_BASE=${DSN_BASE/<host>/$SQL_HOST}
@@ -67,7 +68,7 @@ jobs:
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
       - name: Migration for Article DB
-        working-directory: ./cockroachdb/dev/migration/article
+        working-directory: ./cockroachdb/migration/article
         run: |
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
@@ -76,7 +77,7 @@ jobs:
           goose up
 
       - name: Migration for Tag DB
-        working-directory: ./cockroachdb/dev/migration/tag
+        working-directory: ./cockroachdb/migration/tag
         run: |
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
