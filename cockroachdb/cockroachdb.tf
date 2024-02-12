@@ -1,16 +1,15 @@
 terraform {
-    cloud {
-      organization = "miyamo2-blog"
-
-      workspaces {
-        name = "blog-prod"
-      }
-  }
   required_providers {
     cockroach = {
       source  = "cockroachdb/cockroach"
       version = "1.3.1"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.36.0"
+    }
+  }
+  backend "s3" {
   }
 }
 
@@ -44,8 +43,18 @@ variable "cloud_provider" {
   default  = "AWS"
 }
 
+variable "cockroach_api_key" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+provider "aws" {
+  region = "ap-northeast-1"
+}
+
 provider "cockroach" {
-  # export COCKROACH_API_KEY with the cockroach cloud API Key
+  apikey=cockroach_api_key
 }
 
 resource "cockroach_cluster" "cockroach" {
