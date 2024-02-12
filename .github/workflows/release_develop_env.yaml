@@ -16,6 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up aws cli
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Set up terraform
         uses: hashicorp/setup-terraform@v2
         with:
@@ -65,12 +71,6 @@ jobs:
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgre
           goose up
-
-      - name: Set up aws cli
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       - name: Deploy AWS Network
         working-directory: ./aws/network
