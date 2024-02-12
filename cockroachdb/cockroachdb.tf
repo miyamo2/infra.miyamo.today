@@ -55,7 +55,7 @@ provider "aws" {
 }
 
 provider "cockroach" {
-  apikey=cockroach_api_key
+  apikey = var.cockroach_api_key
 }
 
 resource "cockroach_cluster" "cockroach" {
