@@ -57,11 +57,11 @@ Parameters:
   CockroachDBDsnForArticle:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/cockroachdb/dns/article
+    Default: /blog/cicd/dev/cockroachdb/dsn/article
   CockroachDBDsnForTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/cockroachdb/dns/tag
+    Default: /blog/cicd/dev/cockroachdb/dsn/tag
   Env:
     Type: String
     Default: dev
