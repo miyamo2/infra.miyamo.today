@@ -52,7 +52,7 @@ jobs:
           echo "::add-mask::$SQL_HOST"
           SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
           echo "Replace hostname..."
-          DSN_BASE="postgres://<username>:<password>@<host>:26257/<database>?sslmode=verify-full"
+          DSN_BASE="postgresql://<username>:<password>@<host>:26257/<database>?sslmode=verify-full"
           DSN_BASE=${DSN_BASE/<host>/$SQL_HOST}
           echo "Replaced hostname: ${DSN_BASE}"
           echo "Replace username..."
@@ -80,7 +80,7 @@ jobs:
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgre
+          export GOOSE_DRIVER=postgres
           goose up -dir ./cockroachdb/migration/article
 
       - name: Migration for Tag DB
@@ -88,7 +88,7 @@ jobs:
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgre
+          export GOOSE_DRIVER=postgres
           goose up -dir ./cockroachdb/migration/tag
 
       - name: Deploy AWS Network
