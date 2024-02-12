@@ -121,13 +121,13 @@ jobs:
       - name: Deploy AWS ECS
         working-directory: ./aws/ecs
         run: |
-          if [aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep "None" > /dev/null]; then
+          if [aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -q "None"]; then
             exit 0
           fi
-          if [aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep "None" > /dev/null]; then
+          if [aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -q "None"]; then
             exit 0
           fi
-          if [aws ssm get-parameters --names /blog/cicd/dev/blogapi/tag --output text --query Parameters[0].Value | grep "None" > /dev/null]; then
+          if [aws ssm get-parameters --names /blog/cicd/dev/blogapi/tag --output text --query Parameters[0].Value | grep -q "None"]; then
             exit 0
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
@@ -142,7 +142,7 @@ jobs:
       - name: Deploy AWS API Gateway
         working-directory: ./aws/api-gateway
         run: |
-          if [aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep "None" > /dev/null]; then
+          if [aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep -q "None"]; then
             exit 0
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
