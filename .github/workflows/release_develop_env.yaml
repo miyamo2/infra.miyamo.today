@@ -33,13 +33,16 @@ jobs:
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME_DEV }}" \
             -backend-config="key=state/terraform.tfstate"
+          export TF_LOG=ERROR
+          export TF_LOG_CORE=ERROR
+          export TF_LOG_PROVIDER=ERROR
           terraform apply \
             -auto-approve \
             -var='cockroach_api_key=${{ secrets.COCKROACH_API_KEY }}' \
             -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
             -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
             -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
-          SQL_HOST=$(terraform output sql_dns)
+          SQL_HOST=$(terraform output sql_dns | sed -e 's/"//g')
           echo "::add-mask::$SQL_HOST"
           SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
           echo "Replace hostname..."
