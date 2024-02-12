@@ -25,6 +25,8 @@ jobs:
 
       - name: Set up terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
 
       - name: Deploy CockroachDB
         env:
@@ -42,6 +44,10 @@ jobs:
             -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
             -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
             -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
+
+      - name: Get CockroachDB DSN
+        working-directory: ./cockroachdb
+        run: |
           SQL_HOST=$(terraform output sql_dns | sed -e 's/"//g')
           echo "::add-mask::$SQL_HOST"
           SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
