@@ -90,4 +90,5 @@ resource "cockroach_database" "tag" {
 
 output "sql_dns" {
   value = cockroach_cluster.cockroach.regions[0].sql_dns
+  sensitive = true
 }
