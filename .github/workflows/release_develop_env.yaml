@@ -68,7 +68,6 @@ jobs:
           echo "Replace database..."
           CockroachDBDsnForTag=${DSN_BASE/<database>/tag}
           echo "Replaced database: ${CockroachDBDsnForTag}"
-          echo "Replace password: ${DSN_BASE}"
           echo "::add-mask::$CockroachDBDsnForTag"
           aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
           aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
@@ -77,22 +76,20 @@ jobs:
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
       - name: Migration for Article DB
-        working-directory: ./cockroachdb/migration/article
         run: |
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgre
-          goose up
+          goose up -dir ./cockroachdb/migration/article
 
       - name: Migration for Tag DB
-        working-directory: ./cockroachdb/migration/tag
         run: |
           CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgre
-          goose up
+          goose up -dir ./cockroachdb/migration/tag
 
       - name: Deploy AWS Network
         working-directory: ./aws/network
