@@ -122,7 +122,7 @@ jobs:
         working-directory: ./aws/ecs
         run: |
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep -q "None"
-          if [ $? -eq 0 ]; then; then exit 0
+          if [ $? -eq 0 ]; then exit 0
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep -q "None"
           if [ $? -eq 0 ]; then exit 0
           aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi/tag --output text --query Parameters[0].Value | grep -q "None"
