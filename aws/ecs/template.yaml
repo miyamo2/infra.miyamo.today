@@ -1,0 +1,472 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  VpcId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/vpc/id
+  PublicSubnetOneId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/subnet/public/one/id
+  ServiceDiscoveryNamespaceId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/service-discovery/namespace/internal/id
+  ServiceDiscoveryNamespaceName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/service-discovery/namespace/internal/name
+  BlogAPIServiceSecurityGroup:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ec2/security-group/id
+  BlogAPIECRRepositoryName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi/name
+  BlogAPIECRRepositoryImageTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi/tag
+  BlogAPIArticleECRRepositoryName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi-article-service/name
+  BlogAPIArticleECRRepositoryImageTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi-article-service/tag
+  BlogAPITagECRRepositoryName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi-tag-service/name
+  BlogAPITagECRRepositoryImageTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/ecr/blogapi-tag-service/tag
+  NewRelicAppNameForBlogAPI:
+    Type: String
+  NewRelicAppNameForArticleService:
+    Type: String
+  NewRelicAppNameForTagService:
+    Type: String
+  NewRelicLicenseKey:
+    NoEcho: true
+    Type: String
+  CockroachDBDsnForArticle:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/cockroachdb/dsn/article
+  CockroachDBDsnForTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /blog/cicd/dev/cockroachdb/dsn/tag
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+
+Resources:
+  ## Blog Backend Cluster
+  BlogBackendECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      CapacityProviders:
+        - FARGATE_SPOT
+      ClusterName: !Sub blog-backend-cluster-${Env}
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE_SPOT
+          Weight: 1
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  ## BlogAPI
+  BlogAPITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub blogapi-task-${Env}
+      Cpu: 256 # 0.25 vCPU
+      Memory: 512 # 0.5 GB
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref BlogAPITaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub blogapi-${Env}
+          Cpu: 256 # 0.25 vCPU
+          Memory: 512 # 0.5 GB
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPIECRRepositoryName}:${BlogAPIECRRepositoryImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "curl -f http://localhost/health || exit 1"
+            Interval: 8
+            Retries: 3
+            Timeout: 3
+            StartPeriod: 20
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-create-group: true
+              awslogs-group: !Ref BlogAPITaskLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub blogapi-${Env}
+          Environment:
+            - Name: NEW_RELIC_CONFIG_APP_NAME
+              Value: !Ref NewRelicAppNameForBlogAPI
+            - Name: NEW_RELIC_CONFIG_LICENSE
+              Value: !Ref NewRelicLicenseKey
+            - Name: ARTICLE_SERVICE_ADDRESS
+              Value:
+                Fn::Sub:
+                  - "${SERVICE}.${NAMESPACE}:80"
+                  - SERVICE: !GetAtt BlogAPIArticleServiceDiscoveryService.Name
+                    NAMESPACE: !Ref ServiceDiscoveryNamespaceName
+            - Name: TAG_SERVICE_ADDRESS
+              Value:
+                Fn::Sub:
+                  - "${SERVICE}.${NAMESPACE}:80"
+                  - SERVICE: !GetAtt BlogAPITagServiceDiscoveryService.Name
+                    NAMESPACE: !Ref ServiceDiscoveryNamespaceName
+            - Name: PORT
+              Value: "80"
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+    DependsOn:
+      - BlogAPIArticleTaskDefinition
+      - BlogAPITagTaskDefinition
+
+  BlogAPITaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      # Path: /user-defined/ must be root
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: !Sub blogapi-service-discovery-${Env}
+      DnsConfig:
+        NamespaceId: !Ref ServiceDiscoveryNamespaceId
+        DnsRecords:
+          - TTL: 300
+            Type: SRV
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub blogapi-ecs-service-${Env}
+      Cluster: !Ref BlogBackendECSCluster
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref BlogAPIServiceSecurityGroup
+          Subnets:
+            - !Ref PublicSubnetOneId
+      #DeploymentConfiguration:
+      #  MaximumPercent: 200
+      #  MinimumHealthyPercent: 75
+      DesiredCount: 1
+      TaskDefinition: !Ref BlogAPITaskDefinition
+      ServiceRegistries:
+        - RegistryArn: !GetAtt BlogAPIServiceDiscoveryService.Arn
+          Port: 80
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+    DependsOn:
+      - BlogAPIArticleECSService
+      - BlogAPITagECSService
+
+  BlogAPITaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/logs/blogapi-${Env}
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  ## BlogAPI-Article-Service
+  BlogAPIArticleTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub blogapi-article-service-task-${Env}
+      Cpu: 256 # 0.25 vCPU
+      Memory: 512 # 0.5 GB
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref BlogAPIArticleTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub blogapi-${Env}
+          Cpu: 256 # 0.25 vCPU
+          Memory: 512 # 0.5 GB
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPIArticleECRRepositoryName}:${BlogAPIArticleECRRepositoryImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "/bin/grpc_health_probe -addr=:80 || exit 1"
+            Interval: 8
+            Retries: 3
+            Timeout: 3
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-create-group: true
+              awslogs-group: !Ref BlogAPIArticleTaskLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub blogapi-article-service-${Env}
+          Environment:
+            - Name: COCKROACHDB_DSN
+              Value: !Ref CockroachDBDsnForArticle
+            - Name: SERVICE_NAME
+              Value: "ArticleService"
+            - Name: NEW_RELIC_CONFIG_APP_NAME
+              Value: !Ref NewRelicAppNameForArticleService
+            - Name: NEW_RELIC_CONFIG_LICENSE
+              Value: !Ref NewRelicLicenseKey
+            - Name: PORT
+              Value: "80"
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIArticleTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      # Path: /user-defined/ must be root
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIArticleServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: !Sub blogapi-article-service-service-discovery-${Env}
+      DnsConfig:
+        NamespaceId: !Ref ServiceDiscoveryNamespaceId
+        DnsRecords:
+          - TTL: 300
+            Type: A
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIArticleECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub blogapi-article-service-ecs-service-${Env}
+      Cluster: !Ref BlogBackendECSCluster
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref BlogAPIServiceSecurityGroup
+          Subnets:
+            - !Ref PublicSubnetOneId
+      #DeploymentConfiguration:
+      #  MaximumPercent: 200
+      #  MinimumHealthyPercent: 75
+      DesiredCount: 1
+      TaskDefinition: !Ref BlogAPIArticleTaskDefinition
+      ServiceRegistries:
+        - RegistryArn: !GetAtt BlogAPIArticleServiceDiscoveryService.Arn
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPIArticleTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/logs/blogapi-article-service-${Env}
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  ## BlogAPI-Tag-Service
+  BlogAPITagTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub blogapi-tag-service-task-${Env}
+      Cpu: 256 # 0.25 vCPU
+      Memory: 512 # 0.5 GB
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref BlogAPITagTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub blogapi-${Env}
+          Cpu: 256 # 0.25 vCPU
+          Memory: 512 # 0.5 GB
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPITagECRRepositoryName}:${BlogAPITagECRRepositoryImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "/bin/grpc_health_probe -addr=:80 || exit 1"
+            Interval: 8
+            Retries: 3
+            Timeout: 3
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-create-group: true
+              awslogs-group: !Ref BlogAPITagTaskLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub blogapi-tag-service-${Env}
+          Environment:
+            - Name: COCKROACHDB_DSN
+              Value: !Ref CockroachDBDsnForTag
+            - Name: SERVICE_NAME
+              Value: "TagService"
+            - Name: NEW_RELIC_CONFIG_APP_NAME
+              Value: !Ref NewRelicAppNameForTagService
+            - Name: NEW_RELIC_CONFIG_LICENSE
+              Value: !Ref NewRelicLicenseKey
+            - Name: PORT
+              Value: "80"
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPITagTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      # Path: /user-defined/ must be root
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPITagServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: !Sub blogapi-tag-service-service-discovery-${Env}
+      DnsConfig:
+        NamespaceId: !Ref ServiceDiscoveryNamespaceId
+        DnsRecords:
+          - TTL: 300
+            Type: A
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPITagECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub blogapi-tag-service-ecs-service-${Env}
+      Cluster: !Ref BlogBackendECSCluster
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref BlogAPIServiceSecurityGroup
+          Subnets:
+            - !Ref PublicSubnetOneId
+      #DeploymentConfiguration:
+      #  MaximumPercent: 200
+      #  MinimumHealthyPercent: 75
+      DesiredCount: 1
+      TaskDefinition: !Ref BlogAPITagTaskDefinition
+      ServiceRegistries:
+        - RegistryArn: !GetAtt BlogAPITagServiceDiscoveryService.Arn
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  BlogAPITagTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/logs/blogapi-tag-service-${Env}
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  SSMParameterBlogAPIServiceDiscoveryServiceArn:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /blog/cicd/${Env}/service-discovery/blogapi/arn
+      Type: "String"
+      Value: !GetAtt BlogAPIServiceDiscoveryService.Arn
+      Tags:
+        Environment: !Ref Env

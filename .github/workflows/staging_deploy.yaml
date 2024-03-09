@@ -1,0 +1,156 @@
+name: staging_deploy
+
+on:
+  push:
+    branches:
+      - main
+  repository_dispatch:
+    types:
+      - update_blog-api_dev_ecr
+      - update_blog-api-article_dev_ecr
+      - update_blog-api-tag_dev_ecr
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  staging_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up aws cli
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Deploy CockroachDB
+        env:
+          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+        working-directory: ./cockroachdb
+        run: |
+          terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME_DEV }}" \
+            -backend-config="key=state/terraform.tfstate"
+          export TF_LOG=ERROR
+          export TF_LOG_CORE=ERROR
+          export TF_LOG_PROVIDER=ERROR
+          terraform apply \
+            -auto-approve \
+            -var='cockroach_api_key=${{ secrets.COCKROACH_API_KEY }}' \
+            -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME_DEV }}' \
+            -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME_DEV }}' \
+            -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD_DEV }}'
+
+      - name: Get CockroachDB DSN
+        working-directory: ./cockroachdb
+        run: |
+          SQL_HOST=$(terraform output sql_dns | sed -e 's/"//g')
+          echo "::add-mask::$SQL_HOST"
+          SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
+          echo "Replace hostname..."
+          DSN_BASE="postgresql://<username>:<password>@<host>:26257/<database>?sslmode=verify-full"
+          DSN_BASE=${DSN_BASE/<host>/$SQL_HOST}
+          echo "Replaced hostname: ${DSN_BASE}"
+          echo "Replace username..."
+          DSN_BASE=${DSN_BASE/<username>/${{secrets.COCKROACH_SQL_USER_NAME_DEV}}}
+          echo "Replaced username: ${DSN_BASE}"
+          echo "Replace password..."
+          DSN_BASE=${DSN_BASE/<password>/${{secrets.COCKROACH_SQL_USER_PASSWORD_DEV}}}
+          echo "Replaced password: ${DSN_BASE}"
+          echo "Replace database..."
+          CockroachDBDsnForArticle=${DSN_BASE/<database>/article}
+          echo "Replaced database: ${CockroachDBDsnForArticle}"
+          echo "::add-mask::$CockroachDBDsnForArticle"
+          echo "Replace database..."
+          CockroachDBDsnForTag=${DSN_BASE/<database>/tag}
+          echo "Replaced database: ${CockroachDBDsnForTag}"
+          echo "::add-mask::$CockroachDBDsnForTag"
+          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
+          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ">=1.21.3"
+
+      - name: Setup goose.
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Migration for Article DB
+        working-directory: ./cockroachdb/migration/article
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgres
+          goose up -dir ./cockroachdb/migration/article
+
+      - name: Migration for Tag DB
+        working-directory: ./cockroachdb/migration/tag
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgres
+          goose up -dir ./cockroachdb/migration/tag
+
+      - name: Deploy AWS Network
+        working-directory: ./aws/network
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS ECR
+        working-directory: ./aws/ecr
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecr-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS DynamoDB
+        working-directory: ./aws/dynamodb
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-dynamodb-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
+      - name: Deploy AWS ECS
+        working-directory: ./aws/ecs
+        run: |
+          if ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep "None"; then
+            exit 0
+          fi
+          if ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
+            exit 0
+          fi
+          if aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi/tag --output text --query Parameters[0].Value | grep "None"; then
+            exit 0
+          fi
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            NewRelicAppNameForBlogAPI=blogapi-dev \
+            NewRelicAppNameForArticleService=blogapi-article-service-dev \
+            NewRelicAppNameForTagService=blogapi-tag-service-dev \
+            NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
+            --no-fail-on-empty-changeset \
+
+      - name: Deploy AWS API Gateway
+        working-directory: ./aws/api-gateway
+        run: |
+          if aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep "None"; then
+            exit 0
+          fi
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
