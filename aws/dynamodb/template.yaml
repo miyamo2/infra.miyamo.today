@@ -31,11 +31,11 @@ Resources:
         WriteCapacityUnits: "1"
       BillingMode: PROVISIONED
       GlobalSecondaryIndexes:
-        - IndexName: "Status_ArticleId-Index"
+        - IndexName: "Status_EventId-Index"
           KeySchema:
             - AttributeName: "Status"
               KeyType: "HASH"
-            - AttributeName: "ArticleId"
+            - AttributeName: "EventId"
               KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
@@ -69,11 +69,11 @@ Resources:
         WriteCapacityUnits: "1"
       BillingMode: PROVISIONED
       GlobalSecondaryIndexes:
-        - IndexName: "Status_TagId-Index"
+        - IndexName: "Status_EventId-Index"
           KeySchema:
             - AttributeName: "Status"
               KeyType: "HASH"
-            - AttributeName: "TagId"
+            - AttributeName: "EventId"
               KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
