@@ -3,7 +3,7 @@ name: release_develop_env
 on:
   push:
     branches:
-      - develop
+      - main
   repository_dispatch:
     types:
       - update_blog-api_dev_ecr
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: develop
+          ref: main
 
       - name: Set up aws cli
         uses: aws-actions/configure-aws-credentials@v4
