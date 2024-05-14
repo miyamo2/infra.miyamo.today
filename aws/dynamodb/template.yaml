@@ -90,7 +90,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/dynamodb/article-events/name
+      Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/article-events/name
       Type: "String"
       Value: !Ref ArticleEvents
       Description: "ArticleEvents TableName"
@@ -101,7 +101,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/dynamodb/article-events/stream
+      Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/article-events/stream
       Type: "String"
       Value: !GetAtt ArticleEvents.StreamArn
       Description: "ArticleEvents Stream"
@@ -112,7 +112,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/dynamodb/tag-events/name
+      Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/tag-events/name
       Type: "String"
       Value: !Ref TagEvents
       Description: "TagEvents TableName"
@@ -123,7 +123,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/dynamodb/tag-events/stream
+      Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/tag-events/stream
       Type: "String"
       Value: !GetAtt TagEvents.StreamArn
       Description: "TagEvents Stream"

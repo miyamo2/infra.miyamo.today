@@ -11,64 +11,64 @@ Parameters:
   VpcId:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/vpc/id
+    Default: /miyamo-today/cicd/dev/vpc/id
   PublicSubnetOneId:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/subnet/public/one/id
-  BlogAPIServiceSecurityGroup:
+    Default: /miyamo-today/cicd/dev/subnet/public/one/id
+  MiyamoTodayAPIServiceSecurityGroup:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ec2/security-group/id
-  BlogAPIServiceDiscoveryServiceArn:
+    Default: /miyamo-today/cicd/dev/ec2/security-group/id
+  MiyamoTodayAPIServiceDiscoveryServiceArn:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/service-discovery/blogapi/arn
+    Default: /miyamo-today/cicd/dev/service-discovery/miyamo-today-api/arn
 
 Resources:
-  BlogAPIAPIGateway:
+  MiyamoTodayAPIAPIGateway:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Sub blogapi-api-gateway-${Env}
+      Name: !Sub miyamo-today-api-api-gateway-${Env}
       ProtocolType: HTTP
 
-  BlogAPIAPIGatewaySecurityGroup:
+  MiyamoTodayAPIAPIGatewaySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for API gateway
       VpcId: !Ref VpcId
 
-  BlogAPIAPIGatewayVpcLink:
+  MiyamoTodayAPIAPIGatewayVpcLink:
     Type: AWS::ApiGatewayV2::VpcLink
     Properties:
-      Name: !Sub blogapi-${Env}-vpc-link
+      Name: !Sub miyamo-today-api-${Env}-vpc-link
       SecurityGroupIds:
-        - !Ref BlogAPIAPIGatewaySecurityGroup
+        - !Ref MiyamoTodayAPIAPIGatewaySecurityGroup
       SubnetIds:
         - !Ref PublicSubnetOneId
 
-  BlogAPIAPIGatewayVpcLinkIntegration:
+  MiyamoTodayAPIAPIGatewayVpcLinkIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref BlogAPIAPIGateway
-      ConnectionId: !Ref BlogAPIAPIGatewayVpcLink
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
+      ConnectionId: !Ref MiyamoTodayAPIAPIGatewayVpcLink
       ConnectionType: VPC_LINK
       IntegrationType: HTTP_PROXY
-      IntegrationUri: !Ref BlogAPIServiceDiscoveryServiceArn
+      IntegrationUri: !Ref MiyamoTodayAPIServiceDiscoveryServiceArn
       PayloadFormatVersion: 1.0
       IntegrationMethod: ANY
       PassthroughBehavior: WHEN_NO_MATCH
 
-  BlogAPIAPIGatewayStage:
+  MiyamoTodayAPIAPIGatewayStage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
-      ApiId: !Ref BlogAPIAPIGateway
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
       StageName: "$default"
       AutoDeploy: true
       DefaultRouteSettings:
         DetailedMetricsEnabled: true
       AccessLogSettings:
-        DestinationArn: !GetAtt BlogAPIAPIGatewayLogGroup.Arn
+        DestinationArn: !GetAtt MiyamoTodayAPIAPIGatewayLogGroup.Arn
         Format: >-
           {"requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
           "caller":"$context.identity.caller",
@@ -76,48 +76,48 @@ Resources:
           "routeKey":"$context.routeKey",
           "status":"$context.status"}
 
-  BlogAPIAPIGatewayPOSTProxyPlusRoute:
+  MiyamoTodayAPIAPIGatewayPOSTProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref BlogAPIAPIGateway
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: POST /{proxy+}
       Target: !Join
         - /
         - - integrations
-          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+          - !Ref MiyamoTodayAPIAPIGatewayVpcLinkIntegration
 
-  BlogAPIAPIGatewayGETProxyPlusRoute:
+  MiyamoTodayAPIAPIGatewayGETProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref BlogAPIAPIGateway
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: GET /{proxy+}
       Target: !Join
         - /
         - - integrations
-          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+          - !Ref MiyamoTodayAPIAPIGatewayVpcLinkIntegration
 
-  BlogAPIAPIGatewayOPTIONSProxyPlusRoute:
+  MiyamoTodayAPIAPIGatewayOPTIONSProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref BlogAPIAPIGateway
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: OPTIONS /{proxy+}
       Target: !Join
         - /
         - - integrations
-          - !Ref BlogAPIAPIGatewayVpcLinkIntegration
+          - !Ref MiyamoTodayAPIAPIGatewayVpcLinkIntegration
 
-  BlogAPIAPIGatewayLogGroup:
+  MiyamoTodayAPIAPIGatewayLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/api-gateway/${BlogAPIAPIGateway}"
+      LogGroupName: !Sub "/aws/api-gateway/${MiyamoTodayAPIAPIGateway}"
 
-  BlogAPIServiceIngressFromAPIGateway:
+  MiyamoTodayAPIServiceIngressFromAPIGateway:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref BlogAPIServiceSecurityGroup
+      GroupId: !Ref MiyamoTodayAPIServiceSecurityGroup
       IpProtocol: -1
-      SourceSecurityGroupId: !Ref BlogAPIAPIGatewaySecurityGroup
+      SourceSecurityGroupId: !Ref MiyamoTodayAPIAPIGatewaySecurityGroup
 
 Outputs:
-  BlogAPIUri:
-    Value: !GetAtt BlogAPIAPIGateway.ApiEndpoint
+  MiyamoTodayAPIUri:
+    Value: !GetAtt MiyamoTodayAPIAPIGateway.ApiEndpoint
