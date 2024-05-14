@@ -65,7 +65,7 @@ Resources:
       SubnetId: !Ref PublicSubnetOne
       RouteTableId: !Ref PublicRouteTable
 
-  BlogAPIServiceSecurityGroup:
+  MiyamoTodayAPIServiceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for ecs service
@@ -74,17 +74,17 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIServiceSecurityGroupIngreesSelf:
+  MiyamoTodayAPIServiceSecurityGroupIngreesSelf:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      GroupId: !Ref BlogAPIServiceSecurityGroup
+      GroupId: !Ref MiyamoTodayAPIServiceSecurityGroup
       IpProtocol: -1
-      SourceSecurityGroupId: !Ref BlogAPIServiceSecurityGroup
+      SourceSecurityGroupId: !Ref MiyamoTodayAPIServiceSecurityGroup
 
-  BlogAPIServiceSecurityGroupEgreesAll:
+  MiyamoTodayAPIServiceSecurityGroupEgreesAll:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
-      GroupId: !Ref BlogAPIServiceSecurityGroup
+      GroupId: !Ref MiyamoTodayAPIServiceSecurityGroup
       IpProtocol: -1
       CidrIp: "0.0.0.0/0"
 
@@ -101,19 +101,19 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/vpc/id
+      Name: !Sub /miyamo-today/cicd/${Env}/vpc/id
       Type: "String"
       Value: !Ref VPC
       Tags:
         Environment: !Ref Env
 
-  SSMParameterBlogAPIServiceSecurityGroup:
+  SSMParameterMiyamoTodayAPIServiceSecurityGroup:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/ec2/security-group/id
+      Name: !Sub /miyamo-today/cicd/${Env}/ec2/security-group/id
       Type: "String"
-      Value: !Ref BlogAPIServiceSecurityGroup
+      Value: !Ref MiyamoTodayAPIServiceSecurityGroup
       Tags:
         Environment: !Ref Env
 
@@ -121,7 +121,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/service-discovery/namespace/internal/id
+      Name: !Sub /miyamo-today/cicd/${Env}/service-discovery/namespace/internal/id
       Type: "String"
       Value: !Ref ServiceDiscoveryNamespace
       Tags:
@@ -131,7 +131,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/service-discovery/namespace/internal/name
+      Name: !Sub /miyamo-today/cicd/${Env}/service-discovery/namespace/internal/name
       Type: "String"
       Value: !Sub internal-${Env}
       Tags:
@@ -141,7 +141,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/subnet/public/one/id
+      Name: !Sub /miyamo-today/cicd/${Env}/subnet/public/one/id
       Type: "String"
       Value: !Ref PublicSubnetOne
       Tags:

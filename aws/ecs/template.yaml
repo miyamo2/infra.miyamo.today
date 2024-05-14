@@ -4,48 +4,48 @@ Parameters:
   VpcId:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/vpc/id
+    Default: /miyamo-today/cicd/dev/vpc/id
   PublicSubnetOneId:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/subnet/public/one/id
+    Default: /miyamo-today/cicd/dev/subnet/public/one/id
   ServiceDiscoveryNamespaceId:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/service-discovery/namespace/internal/id
+    Default: /miyamo-today/cicd/dev/service-discovery/namespace/internal/id
   ServiceDiscoveryNamespaceName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/service-discovery/namespace/internal/name
-  BlogAPIServiceSecurityGroup:
+    Default: /miyamo-today/cicd/dev/service-discovery/namespace/internal/name
+  MiyamoTodayAPIServiceSecurityGroup:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ec2/security-group/id
-  BlogAPIECRRepositoryName:
+    Default: /miyamo-today/cicd/dev/ec2/security-group/id
+  MiyamoTodayAPIECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi/name
-  BlogAPIECRRepositoryImageTag:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/name
+  MiyamoTodayAPIECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi/tag
-  BlogAPIArticleECRRepositoryName:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/tag
+  MiyamoTodayAPIArticleECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi-article-service/name
-  BlogAPIArticleECRRepositoryImageTag:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/name
+  MiyamoTodayAPIArticleECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi-article-service/tag
-  BlogAPITagECRRepositoryName:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/tag
+  MiyamoTodayAPITagECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi-tag-service/name
-  BlogAPITagECRRepositoryImageTag:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/name
+  MiyamoTodayAPITagECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/ecr/blogapi-tag-service/tag
-  NewRelicAppNameForBlogAPI:
+    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/tag
+  NewRelicAppNameForMiyamoTodayAPI:
     Type: String
   NewRelicAppNameForArticleService:
     Type: String
@@ -57,11 +57,11 @@ Parameters:
   CockroachDBDsnForArticle:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/cockroachdb/dsn/article
+    Default: /miyamo-today/cicd/dev/cockroachdb/dsn/article
   CockroachDBDsnForTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /blog/cicd/dev/cockroachdb/dsn/tag
+    Default: /miyamo-today/cicd/dev/cockroachdb/dsn/tag
   Env:
     Type: String
     Default: dev
@@ -77,7 +77,7 @@ Resources:
     Properties:
       CapacityProviders:
         - FARGATE_SPOT
-      ClusterName: !Sub blog-backend-cluster-${Env}
+      ClusterName: !Sub miyamo-today-backend-cluster-${Env}
       DefaultCapacityProviderStrategy:
         - CapacityProvider: FARGATE_SPOT
           Weight: 1
@@ -85,11 +85,11 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  ## BlogAPI
-  BlogAPITaskDefinition:
+  ## MiyamoTodayAPI
+  MiyamoTodayAPITaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub blogapi-task-${Env}
+      Family: !Sub miyamo-today-api-task-${Env}
       Cpu: 256 # 0.25 vCPU
       Memory: 512 # 0.5 GB
       RuntimePlatform:
@@ -98,12 +98,12 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref BlogAPITaskExecutionRole
+      ExecutionRoleArn: !Ref MiyamoTodayAPITaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub blogapi-${Env}
+        - Name: !Sub miyamo-today-api-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPIECRRepositoryName}:${BlogAPIECRRepositoryImageTag}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIECRRepositoryName}:${MiyamoTodayAPIECRRepositoryImageTag}
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
@@ -121,25 +121,25 @@ Resources:
               mode: non-blocking
               max-buffer-size: 25m
               awslogs-create-group: true
-              awslogs-group: !Ref BlogAPITaskLogGroup
+              awslogs-group: !Ref MiyamoTodayAPITaskLogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub blogapi-${Env}
+              awslogs-stream-prefix: !Sub miyamo-today-api-${Env}
           Environment:
             - Name: NEW_RELIC_CONFIG_APP_NAME
-              Value: !Ref NewRelicAppNameForBlogAPI
+              Value: !Ref NewRelicAppNameForMiyamoTodayAPI
             - Name: NEW_RELIC_CONFIG_LICENSE
               Value: !Ref NewRelicLicenseKey
             - Name: ARTICLE_SERVICE_ADDRESS
               Value:
                 Fn::Sub:
                   - "${SERVICE}.${NAMESPACE}:80"
-                  - SERVICE: !GetAtt BlogAPIArticleServiceDiscoveryService.Name
+                  - SERVICE: !GetAtt MiyamoTodayAPIArticleServiceDiscoveryService.Name
                     NAMESPACE: !Ref ServiceDiscoveryNamespaceName
             - Name: TAG_SERVICE_ADDRESS
               Value:
                 Fn::Sub:
                   - "${SERVICE}.${NAMESPACE}:80"
-                  - SERVICE: !GetAtt BlogAPITagServiceDiscoveryService.Name
+                  - SERVICE: !GetAtt MiyamoTodayAPITagServiceDiscoveryService.Name
                     NAMESPACE: !Ref ServiceDiscoveryNamespaceName
             - Name: PORT
               Value: "80"
@@ -147,10 +147,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
     DependsOn:
-      - BlogAPIArticleTaskDefinition
-      - BlogAPITagTaskDefinition
+      - MiyamoTodayAPIArticleTaskDefinition
+      - MiyamoTodayAPITagTaskDefinition
 
-  BlogAPITaskExecutionRole:
+  MiyamoTodayAPITaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -171,10 +171,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIServiceDiscoveryService:
+  MiyamoTodayAPIServiceDiscoveryService:
     Type: AWS::ServiceDiscovery::Service
     Properties:
-      Name: !Sub blogapi-service-discovery-${Env}
+      Name: !Sub miyamo-today-api-service-discovery-${Env}
       DnsConfig:
         NamespaceId: !Ref ServiceDiscoveryNamespaceId
         DnsRecords:
@@ -186,46 +186,46 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIECSService:
+  MiyamoTodayAPIECSService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub blogapi-ecs-service-${Env}
+      ServiceName: !Sub miyamo-today-api-ecs-service-${Env}
       Cluster: !Ref BlogBackendECSCluster
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref BlogAPIServiceSecurityGroup
+            - !Ref MiyamoTodayAPIServiceSecurityGroup
           Subnets:
             - !Ref PublicSubnetOneId
       #DeploymentConfiguration:
       #  MaximumPercent: 200
       #  MinimumHealthyPercent: 75
       DesiredCount: 1
-      TaskDefinition: !Ref BlogAPITaskDefinition
+      TaskDefinition: !Ref MiyamoTodayAPITaskDefinition
       ServiceRegistries:
-        - RegistryArn: !GetAtt BlogAPIServiceDiscoveryService.Arn
+        - RegistryArn: !GetAtt MiyamoTodayAPIServiceDiscoveryService.Arn
           Port: 80
       Tags:
         - Key: "Environment"
           Value: !Ref Env
     DependsOn:
-      - BlogAPIArticleECSService
-      - BlogAPITagECSService
+      - MiyamoTodayAPIArticleECSService
+      - MiyamoTodayAPITagECSService
 
-  BlogAPITaskLogGroup:
+  MiyamoTodayAPITaskLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/logs/blogapi-${Env}
+      LogGroupName: !Sub /ecs/logs/miyamo-today-api-${Env}
       Tags:
         - Key: "Environment"
           Value: !Ref Env
 
-  ## BlogAPI-Article-Service
-  BlogAPIArticleTaskDefinition:
+  ## MiyamoTodayAPI-Article-Service
+  MiyamoTodayAPIArticleTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub blogapi-article-service-task-${Env}
+      Family: !Sub miyamo-today-api-article-service-task-${Env}
       Cpu: 256 # 0.25 vCPU
       Memory: 512 # 0.5 GB
       RuntimePlatform:
@@ -234,12 +234,12 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref BlogAPIArticleTaskExecutionRole
+      ExecutionRoleArn: !Ref MiyamoTodayAPIArticleTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub blogapi-${Env}
+        - Name: !Sub miyamo-today-api-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPIArticleECRRepositoryName}:${BlogAPIArticleECRRepositoryImageTag}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIArticleECRRepositoryName}:${MiyamoTodayAPIArticleECRRepositoryImageTag}
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
@@ -256,9 +256,9 @@ Resources:
               mode: non-blocking
               max-buffer-size: 25m
               awslogs-create-group: true
-              awslogs-group: !Ref BlogAPIArticleTaskLogGroup
+              awslogs-group: !Ref MiyamoTodayAPIArticleTaskLogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub blogapi-article-service-${Env}
+              awslogs-stream-prefix: !Sub miyamo-today-api-article-service-${Env}
           Environment:
             - Name: COCKROACHDB_DSN
               Value: !Ref CockroachDBDsnForArticle
@@ -274,7 +274,7 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIArticleTaskExecutionRole:
+  MiyamoTodayAPIArticleTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -295,10 +295,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIArticleServiceDiscoveryService:
+  MiyamoTodayAPIArticleServiceDiscoveryService:
     Type: AWS::ServiceDiscovery::Service
     Properties:
-      Name: !Sub blogapi-article-service-service-discovery-${Env}
+      Name: !Sub miyamo-today-api-article-service-service-discovery-${Env}
       DnsConfig:
         NamespaceId: !Ref ServiceDiscoveryNamespaceId
         DnsRecords:
@@ -310,42 +310,42 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIArticleECSService:
+  MiyamoTodayAPIArticleECSService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub blogapi-article-service-ecs-service-${Env}
+      ServiceName: !Sub miyamo-today-api-article-service-ecs-service-${Env}
       Cluster: !Ref BlogBackendECSCluster
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref BlogAPIServiceSecurityGroup
+            - !Ref MiyamoTodayAPIServiceSecurityGroup
           Subnets:
             - !Ref PublicSubnetOneId
       #DeploymentConfiguration:
       #  MaximumPercent: 200
       #  MinimumHealthyPercent: 75
       DesiredCount: 1
-      TaskDefinition: !Ref BlogAPIArticleTaskDefinition
+      TaskDefinition: !Ref MiyamoTodayAPIArticleTaskDefinition
       ServiceRegistries:
-        - RegistryArn: !GetAtt BlogAPIArticleServiceDiscoveryService.Arn
+        - RegistryArn: !GetAtt MiyamoTodayAPIArticleServiceDiscoveryService.Arn
       Tags:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIArticleTaskLogGroup:
+  MiyamoTodayAPIArticleTaskLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/logs/blogapi-article-service-${Env}
+      LogGroupName: !Sub /ecs/logs/miyamo-today-api-article-service-${Env}
       Tags:
         - Key: "Environment"
           Value: !Ref Env
 
-  ## BlogAPI-Tag-Service
-  BlogAPITagTaskDefinition:
+  ## MiyamoTodayAPI-Tag-Service
+  MiyamoTodayAPITagTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub blogapi-tag-service-task-${Env}
+      Family: !Sub miyamo-today-api-tag-service-task-${Env}
       Cpu: 256 # 0.25 vCPU
       Memory: 512 # 0.5 GB
       RuntimePlatform:
@@ -354,12 +354,12 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref BlogAPITagTaskExecutionRole
+      ExecutionRoleArn: !Ref MiyamoTodayAPITagTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub blogapi-${Env}
+        - Name: !Sub miyamo-today-api-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BlogAPITagECRRepositoryName}:${BlogAPITagECRRepositoryImageTag}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPITagECRRepositoryName}:${MiyamoTodayAPITagECRRepositoryImageTag}
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
@@ -376,9 +376,9 @@ Resources:
               mode: non-blocking
               max-buffer-size: 25m
               awslogs-create-group: true
-              awslogs-group: !Ref BlogAPITagTaskLogGroup
+              awslogs-group: !Ref MiyamoTodayAPITagTaskLogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub blogapi-tag-service-${Env}
+              awslogs-stream-prefix: !Sub miyamo-today-api-tag-service-${Env}
           Environment:
             - Name: COCKROACHDB_DSN
               Value: !Ref CockroachDBDsnForTag
@@ -394,7 +394,7 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPITagTaskExecutionRole:
+  MiyamoTodayAPITagTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -415,10 +415,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPITagServiceDiscoveryService:
+  MiyamoTodayAPITagServiceDiscoveryService:
     Type: AWS::ServiceDiscovery::Service
     Properties:
-      Name: !Sub blogapi-tag-service-service-discovery-${Env}
+      Name: !Sub miyamo-today-api-tag-service-service-discovery-${Env}
       DnsConfig:
         NamespaceId: !Ref ServiceDiscoveryNamespaceId
         DnsRecords:
@@ -430,43 +430,43 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPITagECSService:
+  MiyamoTodayAPITagECSService:
     Type: AWS::ECS::Service
     Properties:
-      ServiceName: !Sub blogapi-tag-service-ecs-service-${Env}
+      ServiceName: !Sub miyamo-today-api-tag-service-ecs-service-${Env}
       Cluster: !Ref BlogBackendECSCluster
       NetworkConfiguration:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref BlogAPIServiceSecurityGroup
+            - !Ref MiyamoTodayAPIServiceSecurityGroup
           Subnets:
             - !Ref PublicSubnetOneId
       #DeploymentConfiguration:
       #  MaximumPercent: 200
       #  MinimumHealthyPercent: 75
       DesiredCount: 1
-      TaskDefinition: !Ref BlogAPITagTaskDefinition
+      TaskDefinition: !Ref MiyamoTodayAPITagTaskDefinition
       ServiceRegistries:
-        - RegistryArn: !GetAtt BlogAPITagServiceDiscoveryService.Arn
+        - RegistryArn: !GetAtt MiyamoTodayAPITagServiceDiscoveryService.Arn
       Tags:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPITagTaskLogGroup:
+  MiyamoTodayAPITagTaskLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/logs/blogapi-tag-service-${Env}
+      LogGroupName: !Sub /ecs/logs/miyamo-today-api-tag-service-${Env}
       Tags:
         - Key: "Environment"
           Value: !Ref Env
 
-  SSMParameterBlogAPIServiceDiscoveryServiceArn:
+  SSMParameterMiyamoTodayAPIServiceDiscoveryServiceArn:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/service-discovery/blogapi/arn
+      Name: !Sub /miyamo-today/cicd/${Env}/service-discovery/miyamo-today-api/arn
       Type: "String"
-      Value: !GetAtt BlogAPIServiceDiscoveryService.Arn
+      Value: !GetAtt MiyamoTodayAPIServiceDiscoveryService.Arn
       Tags:
         Environment: !Ref Env
