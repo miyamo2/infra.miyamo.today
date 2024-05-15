@@ -44,7 +44,6 @@ Resources:
             - !GetAtt VPC.Ipv6CidrBlocks
           - 1
           - 64
-      MapPublicIpOnLaunch: true
       Tags:
         - Key: "Environment"
           Value: !Ref Env
