@@ -29,6 +29,8 @@ Resources:
   PublicSubnetOne:
     Type: AWS::EC2::Subnet
     Properties:
+      AssignIpv6AddressOnCreation: true
+      Ipv6Native: true
       AvailabilityZone:
         Fn::Select:
           - 0
