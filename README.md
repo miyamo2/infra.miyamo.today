@@ -1,3 +1,3 @@
-# blog-cloud-infra
+# infra.miyamo.today
 
-Cloud infrastructure for simply blog application.
+Cloud infrastructure for `miyamo.today`.

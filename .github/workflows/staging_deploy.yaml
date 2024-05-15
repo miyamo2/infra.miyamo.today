@@ -6,9 +6,9 @@ on:
       - main
   repository_dispatch:
     types:
-      - update_blog-api_dev_ecr
-      - update_blog-api-article_dev_ecr
-      - update_blog-api-tag_dev_ecr
+      - update_miyamo-today-api_dev_ecr
+      - update_miyamo-today-api-article_dev_ecr
+      - update_miyamo-today-api-tag_dev_ecr
   workflow_dispatch:
 
 permissions: write-all
@@ -75,8 +75,8 @@ jobs:
           CockroachDBDsnForTag=${DSN_BASE/<database>/tag}
           echo "Replaced database: ${CockroachDBDsnForTag}"
           echo "::add-mask::$CockroachDBDsnForTag"
-          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
-          aws ssm put-parameter --name /blog/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
+          aws ssm put-parameter --name /miyamo-today/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
+          aws ssm put-parameter --name /miyamo-today/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
 
       - uses: actions/setup-go@v5
         with:
@@ -88,7 +88,7 @@ jobs:
       - name: Migration for Article DB
         working-directory: ./cockroachdb/migration/article
         run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
+          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/dev/cockroachdb/dsn/article --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgres
@@ -97,7 +97,7 @@ jobs:
       - name: Migration for Tag DB
         working-directory: ./cockroachdb/migration/tag
         run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /blog/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
+          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/dev/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgres
@@ -107,50 +107,50 @@ jobs:
         working-directory: ./aws/vpc
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS ECR
         working-directory: ./aws/ecr
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecr-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecr-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS DynamoDB
         working-directory: ./aws/dynamodb
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-dynamodb-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-dynamodb-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS ECS
         working-directory: ./aws/ecs
         run: |
-          if ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-article-service/tag --output text --query Parameters[0].Value | grep "None"; then
+          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
-          if ssm get-parameters --names /blog/cicd/dev/ecr/blogapi-tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
+          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
-          if aws ssm get-parameters --names /blog/cicd/dev/ecr/blogapi/tag --output text --query Parameters[0].Value | grep "None"; then
+          if aws ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
-            NewRelicAppNameForBlogAPI=blogapi-dev \
-            NewRelicAppNameForArticleService=blogapi-article-service-dev \
-            NewRelicAppNameForTagService=blogapi-tag-service-dev \
+            NewRelicAppNameForMiyamoTodayAPI=miyamo-today-api-dev \
+            NewRelicAppNameForArticleService=miyamo-today-api-article-service-dev \
+            NewRelicAppNameForTagService=miyamo-today-api-tag-service-dev \
             NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
             --no-fail-on-empty-changeset \
 
       - name: Deploy AWS API Gateway
         working-directory: ./aws/api-gateway
         run: |
-          if aws ssm get-parameters --names /blog/cicd/dev/service-discovery/blogapi/arn --output text --query Parameters[0].Value | grep "None"; then
+          if aws ssm get-parameters --names /miyamo-today/cicd/dev/service-discovery/miyamo-today-api/arn --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-api-gateway-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset

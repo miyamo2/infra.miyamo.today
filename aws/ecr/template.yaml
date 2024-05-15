@@ -10,10 +10,10 @@ Parameters:
       - prod
 
 Resources:
-  BlogAPIECRRepository:
+  MiyamoTodayAPIECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub blogapi-${Env}
+      RepositoryName: !Sub miyamo-today-api-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -38,10 +38,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIArticleECRRepository:
+  MiyamoTodayAPIArticleECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub blogapi-article-service-${Env}
+      RepositoryName: !Sub miyamo-today-api-article-service-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -66,10 +66,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPITagECRRepository:
+  MiyamoTodayAPITagECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub blogapi-tag-service-${Env}
+      RepositoryName: !Sub miyamo-today-api-tag-service-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -94,10 +94,10 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  BlogAPIBloggingEventECRRepository:
+  MiyamoTodayAPIBloggingEventECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub blogapi-blogging_event-service-${Env}
+      RepositoryName: !Sub miyamo-today-api-miyamo-todayging_event-service-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -122,42 +122,42 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  SSMParameterBlogAPIECRRepositoryName:
+  SSMParameterMiyamoTodayAPIECRRepositoryName:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/ecr/blogapi/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api/name
       Type: "String"
-      Value: !Ref BlogAPIECRRepository
+      Value: !Ref MiyamoTodayAPIECRRepository
       Tags:
         Environment: !Ref Env
 
-  SSMParameterBlogAPIArticleECRRepositoryName:
+  SSMParameterMiyamoTodayAPIArticleECRRepositoryName:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-article-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-article-service/name
       Type: "String"
-      Value: !Ref BlogAPIArticleECRRepository
+      Value: !Ref MiyamoTodayAPIArticleECRRepository
       Tags:
         Environment: !Ref Env
 
-  SSMParameterBlogAPITagECRRepositoryName:
+  SSMParameterMiyamoTodayAPITagECRRepositoryName:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-tag-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-tag-service/name
       Type: "String"
-      Value: !Ref BlogAPITagECRRepository
+      Value: !Ref MiyamoTodayAPITagECRRepository
       Tags:
         Environment: !Ref Env
 
-  SSMParameterBlogAPIBloggingEventECRRepositoryName:
+  SSMParameterMiyamoTodayAPIBloggingEventECRRepositoryName:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /blog/cicd/${Env}/ecr/blogapi-blogging-event-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-miyamo-todayging-event-service/name
       Type: "String"
-      Value: !Ref BlogAPIBloggingEventECRRepository
+      Value: !Ref MiyamoTodayAPIBloggingEventECRRepository
       Tags:
         Environment: !Ref Env
