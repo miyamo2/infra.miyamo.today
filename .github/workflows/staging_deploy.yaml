@@ -103,8 +103,8 @@ jobs:
           export GOOSE_DRIVER=postgres
           goose up -dir ./cockroachdb/migration/tag
 
-      - name: Deploy AWS Network
-        working-directory: ./aws/network
+      - name: Deploy AWS VPC
+        working-directory: ./aws/vpc
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name blog-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
