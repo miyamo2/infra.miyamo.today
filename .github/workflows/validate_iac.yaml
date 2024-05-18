@@ -58,7 +58,7 @@ jobs:
           aws-region: ap-northeast-1
 
       - name: Set up terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
           
