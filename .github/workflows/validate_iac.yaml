@@ -1,0 +1,70 @@
+name: validate_iac
+
+on:
+  push:
+    branches:
+      - "feat/**"
+      - "refactor/**"
+      - "bugfix/**"
+      - "hotfix/**"
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  validate-sam:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directories:
+          [
+            "aws/api-gateway",
+            "aws/dynamodb",
+            "aws/ecr",
+            "aws/ecs",
+            "aws/vpc",
+          ]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up aws cli
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+
+      - name: Validate SAM template
+        working-directory: ${{ matrix.directories }}
+        run: |
+          sam validate
+
+  validate-terraform:
+    runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          directories:
+            [
+                "cockroachdb",
+            ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up aws cli
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+      - name: Validate terraform
+        working-directory: ${{ matrix.directories }}
+        run: |
+          export TF_LOG=ERROR
+          export TF_LOG_CORE=ERROR
+          export TF_LOG_PROVIDER=ERROR
+          terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME_DEV }}" \
+          -backend-config="key=state/terraform.tfstate"
+          terraform validate
