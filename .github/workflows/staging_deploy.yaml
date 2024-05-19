@@ -13,6 +13,9 @@ on:
 
 permissions: write-all
 
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
   staging_deploy:
     runs-on: ubuntu-latest
