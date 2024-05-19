@@ -142,7 +142,7 @@ jobs:
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
-            NewRelicAppNameForMiyamoTodayAPI=miyamo-today-api-federator-dev \
+            NewRelicAppNameForFederator=miyamo-today-api-federator-dev \
             NewRelicAppNameForArticleService=miyamo-today-api-article-service-dev \
             NewRelicAppNameForTagService=miyamo-today-api-tag-service-dev \
             NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
