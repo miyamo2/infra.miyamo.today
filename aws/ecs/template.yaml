@@ -236,7 +236,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref MiyamoTodayAPIArticleTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub miyamo-today-api-federator-${Env}
+        - Name: !Sub miyamo-today-api-article-service-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIArticleECRRepositoryName}:${MiyamoTodayAPIArticleECRRepositoryImageTag}
@@ -356,7 +356,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref MiyamoTodayAPITagTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub miyamo-today-api-federator-${Env}
+        - Name: !Sub miyamo-today-api-tag-service-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPITagECRRepositoryName}:${MiyamoTodayAPITagECRRepositoryImageTag}
