@@ -110,7 +110,7 @@ jobs:
         working-directory: ./aws/vpc
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-network-dev --capabilities CAPABILITY_IAM \
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-vpc-dev --capabilities CAPABILITY_IAM \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS ECR
