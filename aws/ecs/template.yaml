@@ -250,6 +250,7 @@ Resources:
             Interval: 8
             Retries: 3
             Timeout: 3
+            StartPeriod: 20
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -370,6 +371,7 @@ Resources:
             Interval: 8
             Retries: 3
             Timeout: 3
+            StartPeriod: 20
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
