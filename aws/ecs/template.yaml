@@ -21,31 +21,31 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/ec2/security-group/id
-  MiyamoTodayAPIECRRepositoryName:
+  MiyamoTodayAPIFederatorECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/name
-  MiyamoTodayAPIECRRepositoryImageTag:
+    Default: /miyamo-today/cicd/dev/ecr/federator/name
+  MiyamoTodayAPIFederatorECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/tag
+    Default: /miyamo-today/cicd/dev/ecr/federator/tag
   MiyamoTodayAPIArticleECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/name
+    Default: /miyamo-today/cicd/dev/ecr/article-service/name
   MiyamoTodayAPIArticleECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/tag
+    Default: /miyamo-today/cicd/dev/ecr/article-service/tag
   MiyamoTodayAPITagECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/name
+    Default: /miyamo-today/cicd/dev/ecr/tag-service/name
   MiyamoTodayAPITagECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/tag
-  NewRelicAppNameForMiyamoTodayAPI:
+    Default: /miyamo-today/cicd/dev/ecr/tag-service/tag
+  NewRelicAppNameForFederator:
     Type: String
   NewRelicAppNameForArticleService:
     Type: String
@@ -103,7 +103,7 @@ Resources:
         - Name: !Sub miyamo-today-api-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIECRRepositoryName}:${MiyamoTodayAPIECRRepositoryImageTag}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIFederatorECRRepositoryName}:${MiyamoTodayAPIFederatorECRRepositoryImageTag}
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
@@ -126,7 +126,7 @@ Resources:
               awslogs-stream-prefix: !Sub miyamo-today-api-${Env}
           Environment:
             - Name: NEW_RELIC_CONFIG_APP_NAME
-              Value: !Ref NewRelicAppNameForMiyamoTodayAPI
+              Value: !Ref NewRelicAppNameForFederator
             - Name: NEW_RELIC_CONFIG_LICENSE
               Value: !Ref NewRelicLicenseKey
             - Name: ARTICLE_SERVICE_ADDRESS
