@@ -10,10 +10,10 @@ Parameters:
       - prod
 
 Resources:
-  MiyamoTodayAPIECRRepository:
+  MiyamoTodayAPIFederatorECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub miyamo-today-api-${Env}
+      RepositoryName: !Sub miyamo-today-api-federator-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -97,7 +97,7 @@ Resources:
   MiyamoTodayAPIBloggingEventECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Sub miyamo-today-api-miyamo-todayging_event-service-${Env}
+      RepositoryName: !Sub miyamo-today-api-miyamo-today-blogging_event-service-${Env}
       RepositoryPolicyText:
         Version: "2012-10-17"
         Statement:
@@ -122,13 +122,13 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  SSMParameterMiyamoTodayAPIECRRepositoryName:
+  SSMParameterMiyamoTodayAPIFederatorECRRepositoryName:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/federator/name
       Type: "String"
-      Value: !Ref MiyamoTodayAPIECRRepository
+      Value: !Ref MiyamoTodayAPIFederatorECRRepository
       Tags:
         Environment: !Ref Env
 
@@ -136,7 +136,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-article-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/article-service/name
       Type: "String"
       Value: !Ref MiyamoTodayAPIArticleECRRepository
       Tags:
@@ -146,7 +146,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-tag-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/tag-service/name
       Type: "String"
       Value: !Ref MiyamoTodayAPITagECRRepository
       Tags:
@@ -156,7 +156,7 @@ Resources:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
-      Name: !Sub /miyamo-today/cicd/${Env}/ecr/miyamo-today-api-miyamo-todayging-event-service/name
+      Name: !Sub /miyamo-today/cicd/${Env}/ecr/blogging-event-service/name
       Type: "String"
       Value: !Ref MiyamoTodayAPIBloggingEventECRRepository
       Tags:

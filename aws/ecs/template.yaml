@@ -21,31 +21,31 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/ec2/security-group/id
-  MiyamoTodayAPIECRRepositoryName:
+  MiyamoTodayAPIFederatorECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/name
-  MiyamoTodayAPIECRRepositoryImageTag:
+    Default: /miyamo-today/cicd/dev/ecr/federator/name
+  MiyamoTodayAPIFederatorECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api/tag
+    Default: /miyamo-today/cicd/dev/ecr/federator/tag
   MiyamoTodayAPIArticleECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/name
+    Default: /miyamo-today/cicd/dev/ecr/article-service/name
   MiyamoTodayAPIArticleECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/tag
+    Default: /miyamo-today/cicd/dev/ecr/article-service/tag
   MiyamoTodayAPITagECRRepositoryName:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/name
+    Default: /miyamo-today/cicd/dev/ecr/tag-service/name
   MiyamoTodayAPITagECRRepositoryImageTag:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
-    Default: /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/tag
-  NewRelicAppNameForMiyamoTodayAPI:
+    Default: /miyamo-today/cicd/dev/ecr/tag-service/tag
+  NewRelicAppNameForFederator:
     Type: String
   NewRelicAppNameForArticleService:
     Type: String
@@ -85,8 +85,8 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  ## MiyamoTodayAPI
-  MiyamoTodayAPITaskDefinition:
+  ## MiyamoTodayAPI Federator
+  MiyamoTodayAPITaskFederatorDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub miyamo-today-api-task-${Env}
@@ -98,12 +98,12 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: !Ref MiyamoTodayAPITaskExecutionRole
+      ExecutionRoleArn: !Ref MiyamoTodayAPITaskFederatorExecutionRole
       ContainerDefinitions:
-        - Name: !Sub miyamo-today-api-${Env}
+        - Name: !Sub miyamo-today-api-federator-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
-          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIECRRepositoryName}:${MiyamoTodayAPIECRRepositoryImageTag}
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIFederatorECRRepositoryName}:${MiyamoTodayAPIFederatorECRRepositoryImageTag}
           PortMappings:
             - ContainerPort: 80
               HostPort: 80
@@ -121,12 +121,12 @@ Resources:
               mode: non-blocking
               max-buffer-size: 25m
               awslogs-create-group: true
-              awslogs-group: !Ref MiyamoTodayAPITaskLogGroup
+              awslogs-group: !Ref MiyamoTodayAPITaskFederatorLogGroup
               awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: !Sub miyamo-today-api-${Env}
+              awslogs-stream-prefix: !Sub miyamo-today-api-federator-${Env}
           Environment:
             - Name: NEW_RELIC_CONFIG_APP_NAME
-              Value: !Ref NewRelicAppNameForMiyamoTodayAPI
+              Value: !Ref NewRelicAppNameForFederator
             - Name: NEW_RELIC_CONFIG_LICENSE
               Value: !Ref NewRelicLicenseKey
             - Name: ARTICLE_SERVICE_ADDRESS
@@ -150,7 +150,7 @@ Resources:
       - MiyamoTodayAPIArticleTaskDefinition
       - MiyamoTodayAPITagTaskDefinition
 
-  MiyamoTodayAPITaskExecutionRole:
+  MiyamoTodayAPITaskFederatorExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -171,7 +171,7 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  MiyamoTodayAPIServiceDiscoveryService:
+  MiyamoTodayAPIFederatorServiceDiscoveryService:
     Type: AWS::ServiceDiscovery::Service
     Properties:
       Name: !Sub miyamo-today-api-service-discovery-${Env}
@@ -202,9 +202,9 @@ Resources:
       #  MaximumPercent: 200
       #  MinimumHealthyPercent: 75
       DesiredCount: 1
-      TaskDefinition: !Ref MiyamoTodayAPITaskDefinition
+      TaskDefinition: !Ref MiyamoTodayAPITaskFederatorDefinition
       ServiceRegistries:
-        - RegistryArn: !GetAtt MiyamoTodayAPIServiceDiscoveryService.Arn
+        - RegistryArn: !GetAtt MiyamoTodayAPIFederatorServiceDiscoveryService.Arn
           Port: 80
       Tags:
         - Key: "Environment"
@@ -213,10 +213,10 @@ Resources:
       - MiyamoTodayAPIArticleECSService
       - MiyamoTodayAPITagECSService
 
-  MiyamoTodayAPITaskLogGroup:
+  MiyamoTodayAPITaskFederatorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/logs/miyamo-today-api-${Env}
+      LogGroupName: !Sub /ecs/logs/miyamo-today-api-federator-${Env}
       Tags:
         - Key: "Environment"
           Value: !Ref Env
@@ -236,7 +236,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref MiyamoTodayAPIArticleTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub miyamo-today-api-${Env}
+        - Name: !Sub miyamo-today-api-article-service-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIArticleECRRepositoryName}:${MiyamoTodayAPIArticleECRRepositoryImageTag}
@@ -356,7 +356,7 @@ Resources:
         - FARGATE
       ExecutionRoleArn: !Ref MiyamoTodayAPITagTaskExecutionRole
       ContainerDefinitions:
-        - Name: !Sub miyamo-today-api-${Env}
+        - Name: !Sub miyamo-today-api-tag-service-${Env}
           Cpu: 256 # 0.25 vCPU
           Memory: 512 # 0.5 GB
           Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPITagECRRepositoryName}:${MiyamoTodayAPITagECRRepositoryImageTag}
@@ -461,12 +461,12 @@ Resources:
         - Key: "Environment"
           Value: !Ref Env
 
-  SSMParameterMiyamoTodayAPIServiceDiscoveryServiceArn:
+  SSMParameterMiyamoTodayAPIFederatorServiceDiscoveryServiceArn:
     Type: "AWS::SSM::Parameter"
     Properties:
       Tier: "Standard"
       Name: !Sub /miyamo-today/cicd/${Env}/service-discovery/miyamo-today-api/arn
       Type: "String"
-      Value: !GetAtt MiyamoTodayAPIServiceDiscoveryService.Arn
+      Value: !GetAtt MiyamoTodayAPIFederatorServiceDiscoveryService.Arn
       Tags:
         Environment: !Ref Env

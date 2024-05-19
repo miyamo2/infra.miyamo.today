@@ -6,7 +6,7 @@ on:
       - main
   repository_dispatch:
     types:
-      - update_miyamo-today-api_dev_ecr
+      - update_miyamo-today-api-federator_dev_ecr
       - update_miyamo-today-api-article_dev_ecr
       - update_miyamo-today-api-tag_dev_ecr
   workflow_dispatch:
@@ -127,19 +127,19 @@ jobs:
       - name: Deploy AWS ECS
         working-directory: ./aws/ecs
         run: |
-          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api-article-service/tag --output text --query Parameters[0].Value | grep "None"; then
+          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/article-service/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
-          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api-tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
+          if ssm get-parameters --names /miyamo-today/cicd/dev/ecr/tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
-          if aws ssm get-parameters --names /miyamo-today/cicd/dev/ecr/miyamo-today-api/tag --output text --query Parameters[0].Value | grep "None"; then
+          if aws ssm get-parameters --names /miyamo-today/cicd/dev/ecr/federator/tag --output text --query Parameters[0].Value | grep "None"; then
             exit 0
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecs-dev --capabilities CAPABILITY_IAM \
             --parameter-overrides \
-            NewRelicAppNameForMiyamoTodayAPI=miyamo-today-api-dev \
+            NewRelicAppNameForMiyamoTodayAPI=miyamo-today-api-federator-dev \
             NewRelicAppNameForArticleService=miyamo-today-api-article-service-dev \
             NewRelicAppNameForTagService=miyamo-today-api-tag-service-dev \
             NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
