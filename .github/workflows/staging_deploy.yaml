@@ -95,7 +95,7 @@ jobs:
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgres
-          goose up -dir ./cockroachdb/migration/article
+          goose up -dir ./
 
       - name: Migration for Tag DB
         working-directory: ./cockroachdb/migration/tag
@@ -104,7 +104,7 @@ jobs:
           echo "::add-mask::$CONNECTION_STRING"
           export GOOSE_DBSTRING=$CONNECTION_STRING
           export GOOSE_DRIVER=postgres
-          goose up -dir ./cockroachdb/migration/tag
+          goose up -dir ./
 
       - name: Deploy AWS VPC
         working-directory: ./aws/vpc
