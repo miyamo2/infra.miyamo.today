@@ -13,29 +13,27 @@ Resources:
   BloggingEvents:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub BloggingEvents-${Env}
+      TableName: !Sub blogging_events-${Env}
       AttributeDefinitions:
-        - AttributeName: "ArticleId"
+        - AttributeName: "event_id"
           AttributeType: "S"
-        - AttributeName: "EventId"
-          AttributeType: "S"
-        - AttributeName: "Status" # Try, Confirm, Cancel
+        - AttributeName: "article_id"
           AttributeType: "S"
       KeySchema:
-        - AttributeName: "ArticleId"
+        - AttributeName: "event_id"
           KeyType: "HASH"
-        - AttributeName: "EventId"
+        - AttributeName: "article_id"
           KeyType: "RANGE"
       ProvisionedThroughput:
         ReadCapacityUnits: "1"
         WriteCapacityUnits: "1"
       BillingMode: PROVISIONED
       GlobalSecondaryIndexes:
-        - IndexName: "Status_EventId-Index"
+        - IndexName: "article_id_event_id-Index"
           KeySchema:
-            - AttributeName: "Status"
+            - AttributeName: "article_id"
               KeyType: "HASH"
-            - AttributeName: "EventId"
+            - AttributeName: "event_id"
               KeyType: "RANGE"
           Projection:
             ProjectionType: "ALL"
