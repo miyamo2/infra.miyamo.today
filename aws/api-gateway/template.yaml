@@ -31,7 +31,15 @@ Resources:
     Properties:
       Name: !Sub miyamo-today-api-api-gateway-${Env}
       ProtocolType: HTTP
-
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - "GET"
+          - "POST"
+          - "OPTIONS"
+        AllowHeaders:
+          - "*"
   MiyamoTodayAPIAPIGatewaySecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
