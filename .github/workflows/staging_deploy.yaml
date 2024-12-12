@@ -81,12 +81,7 @@ jobs:
           aws ssm put-parameter --name /miyamo-today/cicd/dev/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
           aws ssm put-parameter --name /miyamo-today/cicd/dev/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ">=1.21.3"
-
-      - name: Setup goose.
-        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+      - uses: mscno/setup-goose@v1
 
       - name: Migration for Article DB
         working-directory: ./cockroachdb/migration/article
