@@ -45,11 +45,21 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/ecr/tag-service/tag
+  MiyamoTodayAPIBloggingEventECRRepositoryName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/ecr/blogging-event-service/name
+  MiyamoTodayAPIBloggingEventECRRepositoryImageTag:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/ecr/blogging-event-service/tag
   NewRelicAppNameForFederator:
     Type: String
   NewRelicAppNameForArticleService:
     Type: String
   NewRelicAppNameForTagService:
+    Type: String
+  NewRelicAppNameForBloggingEventService:
     Type: String
   NewRelicLicenseKey:
     NoEcho: true
@@ -62,6 +72,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/cockroachdb/dsn/tag
+  BloggingEventsTableName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/dynamodb/blogging-events/name
   Env:
     Type: String
     Default: dev
@@ -111,10 +125,10 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "curl -f http://localhost/health || exit 1"
-            Interval: 8
+            Interval: 3
             Retries: 3
             Timeout: 3
-            StartPeriod: 20
+            StartPeriod: 3
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -140,6 +154,12 @@ Resources:
                 Fn::Sub:
                   - "${SERVICE}.${NAMESPACE}:80"
                   - SERVICE: !GetAtt MiyamoTodayAPITagServiceDiscoveryService.Name
+                    NAMESPACE: !Ref ServiceDiscoveryNamespaceName
+            - Name: BLOGGING_EVENT_SERVICE_ADDRESS
+              Value:
+                Fn::Sub:
+                  - "${SERVICE}.${NAMESPACE}:80"
+                  - SERVICE: !GetAtt MiyamoTodayAPIBloggingEventServiceDiscoveryService.Name
                     NAMESPACE: !Ref ServiceDiscoveryNamespaceName
             - Name: PORT
               Value: "80"
@@ -247,10 +267,9 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "/bin/grpc_health_probe -addr=:80 || exit 1"
-            Interval: 8
+            Interval: 3
             Retries: 3
             Timeout: 3
-            StartPeriod: 20
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -368,10 +387,9 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "/bin/grpc_health_probe -addr=:80 || exit 1"
-            Interval: 8
+            Interval: 3
             Retries: 3
             Timeout: 3
-            StartPeriod: 20
           LogConfiguration:
             LogDriver: "awslogs"
             Options:
@@ -459,6 +477,146 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /ecs/logs/miyamo-today-api-tag-service-${Env}
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  ## MiyamoTodayAPI-BloggingEvent-Service
+  MiyamoTodayAPIBloggingEventTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub miyamo-today-api-blogging-event-service-task-${Env}
+      Cpu: 256 # 0.25 vCPU
+      Memory: 512 # 0.5 GB
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref MiyamoTodayAPIBloggingEventTaskExecutionRole
+      ContainerDefinitions:
+        - Name: !Sub miyamo-today-api-blogging-event-service-${Env}
+          Cpu: 256 # 0.25 vCPU
+          Memory: 512 # 0.5 GB
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${MiyamoTodayAPIBloggingEventECRRepositoryName}:${MiyamoTodayAPIBloggingEventECRRepositoryImageTag}
+          PortMappings:
+            - ContainerPort: 80
+              HostPort: 80
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "/bin/grpc_health_probe -addr=:80 || exit 1"
+            Interval: 3
+            Retries: 3
+            Timeout: 3
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              mode: non-blocking
+              max-buffer-size: 25m
+              awslogs-create-group: true
+              awslogs-group: !Ref MiyamoTodayAPIBloggingEventTaskLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: !Sub miyamo-today-api-blogging-event-service-${Env}
+          Environment:
+            - Name: SERVICE_NAME
+              Value: "BloggingEventService"
+            - Name: NEW_RELIC_CONFIG_APP_NAME
+              Value: !Ref NewRelicAppNameForBloggingEventService
+            - Name: NEW_RELIC_CONFIG_LICENSE
+              Value: !Ref NewRelicLicenseKey
+            - Name: PORT
+              Value: "80"
+            - Name: BLOGGING_EVENTS_TABLE_NAME
+              Value: !Ref BloggingEventsTableName
+      TaskRoleArn: !Ref MiyamoTodayAPIBloggingEventTaskRole
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  MiyamoTodayAPIBloggingEventTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      # Path: /user-defined/ must be root
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  MiyamoTodayAPIBloggingEventTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ecs-tasks.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      # Path: /user-defined/ must be root
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  MiyamoTodayAPIBloggingEventServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      Name: !Sub miyamo-today-api-blogging-event-service-service-discovery-${Env}
+      DnsConfig:
+        NamespaceId: !Ref ServiceDiscoveryNamespaceId
+        DnsRecords:
+          - TTL: 300
+            Type: A
+      HealthCheckCustomConfig:
+        FailureThreshold: 1
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  MiyamoTodayAPIBloggingEventECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub miyamo-today-api-blogging-event-service-ecs-service-${Env}
+      Cluster: !Ref BlogBackendECSCluster
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref MiyamoTodayAPIServiceSecurityGroup
+          Subnets:
+            - !Ref PublicSubnetOneId
+      #DeploymentConfiguration:
+      #  MaximumPercent: 200
+      #  MinimumHealthyPercent: 75
+      DesiredCount: 1
+      TaskDefinition: !Ref MiyamoTodayAPIBloggingEventTaskDefinition
+      ServiceRegistries:
+        - RegistryArn: !GetAtt MiyamoTodayAPIBloggingEventServiceDiscoveryService.Arn
+      Tags:
+        - Key: "Environment"
+          Value: !Ref Env
+
+  MiyamoTodayAPIBloggingEventTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ecs/logs/miyamo-today-api-blogging-event-service-${Env}
       Tags:
         - Key: "Environment"
           Value: !Ref Env
