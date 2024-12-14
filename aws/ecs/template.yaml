@@ -125,7 +125,7 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "curl -f http://localhost/health || exit 1"
-            Interval: 3
+            Interval: 5
             Retries: 3
             Timeout: 3
             StartPeriod: 3
@@ -267,7 +267,7 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "/bin/grpc_health_probe -addr=:80 || exit 1"
-            Interval: 3
+            Interval: 5
             Retries: 3
             Timeout: 3
           LogConfiguration:
@@ -387,7 +387,7 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "/bin/grpc_health_probe -addr=:80 || exit 1"
-            Interval: 3
+            Interval: 5
             Retries: 3
             Timeout: 3
           LogConfiguration:
@@ -507,7 +507,7 @@ Resources:
             Command:
               - "CMD-SHELL"
               - "/bin/grpc_health_probe -addr=:80 || exit 1"
-            Interval: 3
+            Interval: 5
             Retries: 3
             Timeout: 3
           LogConfiguration:
