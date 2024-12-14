@@ -72,6 +72,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/cockroachdb/dsn/tag
+  BloggingEventsTableName:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/dynamodb/blogging-events/name
   Env:
     Type: String
     Default: dev
@@ -524,6 +528,8 @@ Resources:
               Value: !Ref NewRelicLicenseKey
             - Name: PORT
               Value: "80"
+            - Name: BLOGGING_EVENTS_TABLE_NAME
+              Value: !Ref BloggingEventsTableName
       TaskRoleArn: !Ref MiyamoTodayAPIBloggingEventTaskRole
       Tags:
         - Key: "Environment"
