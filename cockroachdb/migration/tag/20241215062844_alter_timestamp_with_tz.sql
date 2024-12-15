@@ -1,5 +1,5 @@
+-- +goose NO TRANSACTION
 -- +goose Up
--- +goose StatementBegin
 SET enable_experimental_alter_column_type_general = true;
 
 ALTER TABLE articles
@@ -13,10 +13,8 @@ ALTER TABLE tags
 
 ALTER TABLE tags
     ALTER COLUMN updated_at SET DATA TYPE TIMESTAMP WITH TIME ZONE USING updated_at AT TIME ZONE 'UTC';
--- +goose StatementEnd
 
 -- +goose Down
--- +goose StatementBegin
 SET enable_experimental_alter_column_type_general = true;
 
 ALTER TABLE articles
@@ -30,4 +28,4 @@ ALTER TABLE tags
 
 ALTER TABLE tags
     ALTER COLUMN updated_at SET DATA TYPE TIMESTAMP WITHOUT TIME ZONE;
--- +goose StatementEnd
+
