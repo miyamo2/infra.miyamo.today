@@ -550,19 +550,21 @@ Resources:
               StringEquals:
                 aws:SourceAccount: !Ref AWS::AccountId
       Policies:
-        - Statement:
-          - Sid: DynamoDBPolicy
-            Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:Scan
-              - dynamodb:Query
-              - dynamodb:PartiQLInsert
-              - dynamodb:PartiQLUpdate
-              - dynamodb:PartiQLDelete
-              - dynamodb:PartiQLSelect
-              - dynamodb:DescribeEndpoints
-            Resource: "*"
+        - PolicyName: AllowAllActions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                  - dynamodb:PartiQLInsert
+                  - dynamodb:PartiQLUpdate
+                  - dynamodb:PartiQLDelete
+                  - dynamodb:PartiQLSelect
+                  - dynamodb:DescribeEndpoints
+                Resource: "*"
       Tags:
         - Key: "Environment"
           Value: !Ref Env
