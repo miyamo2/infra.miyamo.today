@@ -549,20 +549,20 @@ Resources:
                 aws:SourceArn: !Sub arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:*
               StringEquals:
                 aws:SourceAccount: !Ref AWS::AccountId
-        Policies:
-          - Statement:
-              - Sid: DynamoDBPolicy
-                Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:Scan
-                  - dynamodb:Query
-                  - dynamodb:PartiQLInsert
-                  - dynamodb:PartiQLUpdate
-                  - dynamodb:PartiQLDelete
-                  - dynamodb:PartiQLSelect
-                  - dynamodb:DescribeEndpoints
-      # Path: /user-defined/ must be root
+      Policies:
+        - Statement:
+          - Sid: DynamoDBPolicy
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:Query
+              - dynamodb:PartiQLInsert
+              - dynamodb:PartiQLUpdate
+              - dynamodb:PartiQLDelete
+              - dynamodb:PartiQLSelect
+              - dynamodb:DescribeEndpoints
+            Resource: "*"
       Tags:
         - Key: "Environment"
           Value: !Ref Env
