@@ -76,6 +76,12 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/dynamodb/blogging-events/name
+  S3BucketForImage:
+    Type: String
+    NoEcho: true
+  CDNHostForImage:
+    Type: String
+    NoEcho: true
   Env:
     Type: String
     Default: dev
@@ -530,6 +536,10 @@ Resources:
               Value: "80"
             - Name: BLOGGING_EVENTS_TABLE_NAME
               Value: !Ref BloggingEventsTableName
+            - Name: S3_BUCKET
+              Value: !Ref S3BucketForImage
+            - Name: CDN_HOST
+              Value: !Ref CDNHostForImage
       TaskRoleArn: !Ref MiyamoTodayAPIBloggingEventTaskRole
       Tags:
         - Key: "Environment"
@@ -564,7 +574,11 @@ Resources:
                   - dynamodb:PartiQLDelete
                   - dynamodb:PartiQLSelect
                   - dynamodb:DescribeEndpoints
-                Resource: "*"
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${BloggingEventsTableName}
+              - Effect: Allow
+                Action:
+                  - s3:*Object"
+                Resource: !Sub arn:aws:s3:::${S3BucketForImage}/*
       Tags:
         - Key: "Environment"
           Value: !Ref Env

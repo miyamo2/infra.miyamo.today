@@ -147,6 +147,8 @@ jobs:
             NewRelicAppNameForTagService=miyamo-today-api-tag-service-dev \
             NewRelicAppNameForBloggingEventService=miyamo-today-api-blogging-event-service-dev \
             NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
+            S3BucketForImage=${{ secrets.S3_BUCKET_FOR_IMAGE }} \
+            CDNHostForImage=${{ secrets.CDN_HOST_FOR_IMAGE }} \
             --no-fail-on-empty-changeset \
 
       - name: Deploy AWS API Gateway
