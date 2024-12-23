@@ -28,6 +28,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/cognito/user-pool/id
+  CognitoUserPoolClientId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/cognito/user-pool-client/id
 
 Resources:
   MiyamoTodayAPIAPIGateway:
@@ -97,7 +101,7 @@ Resources:
         - $request.header.Authorization
       JwtConfiguration:
         Audience:
-          - !Ref CognitoUserPoolId
+          - !Ref CognitoUserPoolClientId
         Issuer: !Sub https://cognito-idp.ap-northeast-1.amazonaws.com/${CognitoUserPoolId}
       Name: !Sub miyamo-today-api-api-gateway-authorizer-${Env}
 

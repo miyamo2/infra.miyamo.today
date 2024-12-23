@@ -36,6 +36,10 @@ Resources:
         - ALLOW_ADMIN_USER_PASSWORD_AUTH
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
 
   SSMParameterCognitoUserPoolId:
     Type: "AWS::SSM::Parameter"
@@ -45,5 +49,16 @@ Resources:
       Type: "String"
       Value: !GetAtt MiyamoTodayAPIUserPool.UserPoolId
       Description: "Cognito User Pool ID"
+      Tags:
+        Environment: !Ref Env
+
+  SSMParameterCognitoUserPoolClientId:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /miyamo-today/cicd/${Env}/cognito/user-pool-client/id
+      Type: "String"
+      Value: !Ref MiyamoTodayAPIUserPoolClient
+      Description: "Cognito User Pool Client ID"
       Tags:
         Environment: !Ref Env
