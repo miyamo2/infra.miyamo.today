@@ -17,7 +17,7 @@ terraform {
 variable "cluster_name" {
   type     = string
   nullable = false
-  default = "smiley-russ-cox"
+  default = "dummy"
 }
 
 variable "sql_user_name" {
