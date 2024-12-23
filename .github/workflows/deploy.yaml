@@ -108,6 +108,8 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-vpc-prod --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            Env=prod \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS ECR
@@ -115,6 +117,8 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecr-prod --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            Env=prod \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS DynamoDB
@@ -122,6 +126,8 @@ jobs:
         run: |
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-dynamodb-prod --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            Env=prod \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS ECS
@@ -142,6 +148,7 @@ jobs:
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecs-prod --capabilities CAPABILITY_IAM \
             --parameter-overrides \
+            Env=prod \
             NewRelicAppNameForFederator=miyamo-today-api-federator-prod \
             NewRelicAppNameForArticleService=miyamo-today-api-article-service-prod \
             NewRelicAppNameForTagService=miyamo-today-api-tag-service-prod \
@@ -173,12 +180,7 @@ jobs:
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-cognito-prod --capabilities CAPABILITY_IAM \
             --parameter-overrides \
-            VpcId=/miyamo-today/cicd/prod/vpc/id \
-            PublicSubnetOneId=/miyamo-today/cicd/prod/subnet/public/one/id \
-            MiyamoTodayAPIServiceSecurityGroup=/miyamo-today/cicd/prod/ec2/security-group/id \
-            MiyamoTodayAPIServiceDiscoveryServiceArn=/miyamo-today/cicd/prod/service-discovery/miyamo-today-api/arn \
-            CognitoUserPoolId=/miyamo-today/cicd/prod/cognito/user-pool/id \
-            CognitoUserPoolClientId=/miyamo-today/cicd/prod/cognito/user-pool-client/id \
+            Env=prod \
             --no-fail-on-empty-changeset
 
       - name: Deploy AWS API Gateway
@@ -189,4 +191,12 @@ jobs:
           fi
           sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
           sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-api-gateway-prod --capabilities CAPABILITY_IAM \
+            --parameter-overrides \
+            Env=prod \
+            VpcId=/miyamo-today/cicd/prod/vpc/id \
+            PublicSubnetOneId=/miyamo-today/cicd/prod/subnet/public/one/id \
+            MiyamoTodayAPIServiceSecurityGroup=/miyamo-today/cicd/prod/ec2/security-group/id \
+            MiyamoTodayAPIServiceDiscoveryServiceArn=/miyamo-today/cicd/prod/service-discovery/miyamo-today-api/arn \
+            CognitoUserPoolId=/miyamo-today/cicd/prod/cognito/user-pool/id \
+            CognitoUserPoolClientId=/miyamo-today/cicd/prod/cognito/user-pool-client/id \
             --no-fail-on-empty-changeset
