@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Env:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - stage
+      - prod
+
+Resources:
+  MiyamoTodayAPIUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub blogapi-miyamo-today-user-pool-${Env}
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      UsernameAttributes:
+        - email
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_phone_number
+            Priority: 1
+          - Name: verified_email
+            Priority: 2
+      AutoVerifiedAttributes:
+        - email
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  MiyamoTodayAPIUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MiyamoTodayAPIUserPool
+      ClientName: !Sub blogapi-miyamo-today-user-pool-client-${Env}
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+
+  SSMParameterCognitoUserPoolId:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Tier: "Standard"
+      Name: !Sub /miyamo-today/cicd/${Env}/cognito/user-pool/id
+      Type: "String"
+      Value: !GetAtt MiyamoTodayAPIUserPool.UserPoolId
+      Description: "Cognito User Pool ID"
+      Tags:
+        Environment: !Ref Env

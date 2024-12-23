@@ -151,6 +151,13 @@ jobs:
             CDNHostForImage=${{ secrets.CDN_HOST_FOR_IMAGE }} \
             --no-fail-on-empty-changeset \
 
+      - name: Deploy Cognito
+        working-directory: ./aws/cognito
+        run: |
+          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME_DEV }}
+          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-cognito-dev --capabilities CAPABILITY_IAM \
+            --no-fail-on-empty-changeset
+
       - name: Deploy AWS API Gateway
         working-directory: ./aws/api-gateway
         run: |
