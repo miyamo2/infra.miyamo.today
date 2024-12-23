@@ -38,7 +38,7 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
       TokenValidityUnits:
         AccessToken: hours
-        IdToken: hours
+        IdToken: days
         RefreshToken: days
 
   SSMParameterCognitoUserPoolId:
