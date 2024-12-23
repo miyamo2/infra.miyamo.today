@@ -26,10 +26,6 @@ Resources:
             Priority: 2
       AutoVerifiedAttributes:
         - email
-      ExplicitAuthFlows:
-        - ALLOW_ADMIN_USER_PASSWORD_AUTH
-        - ALLOW_USER_PASSWORD_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
 
   MiyamoTodayAPIUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -38,6 +34,10 @@ Resources:
       ClientName: !Sub blogapi-miyamo-today-user-pool-client-${Env}
       GenerateSecret: false
       PreventUserExistenceErrors: ENABLED
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
 
   SSMParameterCognitoUserPoolId:
     Type: "AWS::SSM::Parameter"
