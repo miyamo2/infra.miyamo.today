@@ -3,7 +3,7 @@ name: staging_deploy
 on:
   push:
     branches:
-      - main
+      - develop
   repository_dispatch:
     types:
       - update_miyamo-today-api-federator_dev_ecr
