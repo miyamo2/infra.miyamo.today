@@ -24,6 +24,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     NoEcho: true
     Default: /miyamo-today/cicd/dev/service-discovery/miyamo-today-api/arn
+  CognitoUserPoolId:
+    Type: AWS::SSM::Parameter::Value<String>
+    NoEcho: true
+    Default: /miyamo-today/cicd/dev/cognito/user-pool/id
 
 Resources:
   MiyamoTodayAPIAPIGateway:
@@ -83,12 +87,27 @@ Resources:
           "user":"$context.identity.user","requestTime":"$context.requestTime",
           "routeKey":"$context.routeKey",
           "status":"$context.status"}
+  
+  MiyamoTodayAPIAPIGatewayAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref MiyamoTodayAPIAPIGateway
+      AuthorizerType: JWT
+      IdentitySource:
+        - $request.header.Authorization
+      JwtConfiguration:
+        Audience:
+          - !Ref CognitoUserPoolId
+        Issuer: !Sub https://cognito-idp.ap-northeast-1.amazonaws.com/${CognitoUserPoolId}
+      Name: !Sub miyamo-today-api-api-gateway-authorizer-${Env}
 
   MiyamoTodayAPIAPIGatewayPOSTProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: POST /{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref MiyamoTodayAPIAPIGatewayAuthorizer
       Target: !Join
         - /
         - - integrations
@@ -99,6 +118,8 @@ Resources:
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: GET /{proxy+}
+      AuthorizationType: JWT
+      AuthorizerId: !Ref MiyamoTodayAPIAPIGatewayAuthorizer
       Target: !Join
         - /
         - - integrations
