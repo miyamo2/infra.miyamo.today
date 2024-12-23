@@ -20,10 +20,8 @@ Resources:
         - email
       AccountRecoverySetting:
         RecoveryMechanisms:
-          - Name: verified_phone_number
-            Priority: 1
           - Name: verified_email
-            Priority: 2
+            Priority: 1
       AutoVerifiedAttributes:
         - email
 
