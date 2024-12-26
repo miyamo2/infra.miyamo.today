@@ -45,7 +45,7 @@ jobs:
         working-directory: ./cockroachdb
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}" \
-            -backend-config="key=state/terraform.tfstate"
+            -backend-config="key=cockroachdb/terraform.tfstate"
           export TF_LOG=ERROR
           export TF_LOG_CORE=ERROR
           export TF_LOG_PROVIDER=ERROR
