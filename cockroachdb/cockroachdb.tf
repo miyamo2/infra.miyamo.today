@@ -2,7 +2,7 @@ terraform {
   required_providers {
     cockroach = {
       source  = "cockroachdb/cockroach"
-      version = "1.11.0"
+      version = "1.11.1"
     }
     aws = {
       source  = "hashicorp/aws"
