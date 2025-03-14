@@ -12,6 +12,7 @@ Parameters:
 Resources:
   BloggingEvents:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
     Properties:
       TableName: !Sub blogging_events-${Env}
       AttributeDefinitions:
@@ -48,6 +49,7 @@ Resources:
 
   SSMParameterBloggingEventsTableName:
     Type: "AWS::SSM::Parameter"
+    DeletionPolicy: Retain
     Properties:
       Tier: "Standard"
       Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/blogging-events/name
@@ -59,6 +61,7 @@ Resources:
 
   SSMParameterBloggingEventsStream:
     Type: "AWS::SSM::Parameter"
+    DeletionPolicy: Retain
     Properties:
       Tier: "Standard"
       Name: !Sub /miyamo-today/cicd/${Env}/dynamodb/blogging-events/stream
