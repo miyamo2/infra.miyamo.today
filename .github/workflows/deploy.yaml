@@ -22,12 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
 
       - name: Set up aws cli
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -35,7 +35,7 @@ jobs:
           mask-aws-account-id: true
 
       - name: Set up terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_wrapper: false
 
@@ -83,7 +83,7 @@ jobs:
           aws ssm put-parameter --name /miyamo-today/cicd/prod/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
           aws ssm put-parameter --name /miyamo-today/cicd/prod/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
 
-      - uses: mscno/setup-goose@v1
+      - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
 
       - name: Migration for Article DB
         working-directory: ./cockroachdb/migration/article
