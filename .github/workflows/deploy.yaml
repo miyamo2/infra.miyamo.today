@@ -121,15 +121,6 @@ jobs:
             Env=prod \
             --no-fail-on-empty-changeset
 
-      - name: Deploy AWS DynamoDB
-        working-directory: ./aws/dynamodb
-        run: |
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-dynamodb-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            --no-fail-on-empty-changeset
-
       - name: Deploy AWS ECS
         working-directory: ./aws/ecs
         run: |
