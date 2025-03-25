@@ -12,6 +12,7 @@ Parameters:
 Resources:
   MiyamoTodayAPIUserPool:
     Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
     Properties:
       UserPoolName: !Sub blogapi-miyamo-today-user-pool-${Env}
       AdminCreateUserConfig:
@@ -27,6 +28,7 @@ Resources:
 
   MiyamoTodayAPIUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
+    DeletionPolicy: Retain
     Properties:
       UserPoolId: !Ref MiyamoTodayAPIUserPool
       ClientName: !Sub blogapi-miyamo-today-user-pool-client-${Env}
