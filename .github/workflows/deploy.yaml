@@ -34,75 +34,6 @@ jobs:
           aws-region: ap-northeast-1
           mask-aws-account-id: true
 
-      - name: Set up terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
-        with:
-          terraform_wrapper: false
-
-      - name: Deploy CockroachDB
-        env:
-          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-        working-directory: ./cockroachdb
-        run: |
-          terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}" \
-            -backend-config="key=cockroachdb/terraform.tfstate"
-          export TF_LOG=ERROR
-          export TF_LOG_CORE=ERROR
-          export TF_LOG_PROVIDER=ERROR
-          terraform apply \
-            -auto-approve \
-            -var='cockroach_api_key=${{ secrets.COCKROACH_API_KEY }}' \
-            -var='cluster_name=${{ secrets.COCKROACH_CLUSTER_NAME }}' \
-            -var='sql_user_name=${{ secrets.COCKROACH_SQL_USER_NAME }}' \
-            -var='sql_user_password=${{ secrets.COCKROACH_SQL_USER_PASSWORD }}'
-
-      - name: Get CockroachDB DSN
-        working-directory: ./cockroachdb
-        run: |
-          SQL_HOST=$(terraform output sql_dns | sed -e 's/"//g')
-          echo "::add-mask::$SQL_HOST"
-          SQL_HOST=$(echo $SQL_HOST | sed -e 's/"//g')
-          echo "Replace hostname..."
-          DSN_BASE="postgresql://<username>:<password>@<host>:26257/<database>?sslmode=verify-full"
-          DSN_BASE=${DSN_BASE/<host>/$SQL_HOST}
-          echo "Replaced hostname: ${DSN_BASE}"
-          echo "Replace username..."
-          DSN_BASE=${DSN_BASE/<username>/${{secrets.COCKROACH_SQL_USER_NAME}}}
-          echo "Replaced username: ${DSN_BASE}"
-          echo "Replace password..."
-          DSN_BASE=${DSN_BASE/<password>/${{secrets.COCKROACH_SQL_USER_PASSWORD}}}
-          echo "Replaced password: ${DSN_BASE}"
-          echo "Replace database..."
-          CockroachDBDsnForArticle=${DSN_BASE/<database>/article}
-          echo "Replaced database: ${CockroachDBDsnForArticle}"
-          echo "::add-mask::$CockroachDBDsnForArticle"
-          echo "Replace database..."
-          CockroachDBDsnForTag=${DSN_BASE/<database>/tag}
-          echo "Replaced database: ${CockroachDBDsnForTag}"
-          echo "::add-mask::$CockroachDBDsnForTag"
-          aws ssm put-parameter --name /miyamo-today/cicd/prod/cockroachdb/dsn/article --value $CockroachDBDsnForArticle --type String --overwrite
-          aws ssm put-parameter --name /miyamo-today/cicd/prod/cockroachdb/dsn/tag --value $CockroachDBDsnForTag --type String --overwrite
-
-      - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
-
-      - name: Migration for Article DB
-        working-directory: ./cockroachdb/migration/article
-        run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/article --output text --query Parameters[0].Value)
-          echo "::add-mask::$CONNECTION_STRING"
-          export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgres
-          goose up -dir ./
-
-      - name: Migration for Tag DB
-        working-directory: ./cockroachdb/migration/tag
-        run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
-          echo "::add-mask::$CONNECTION_STRING"
-          export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgres
-          goose up -dir ./
-
       - name: Deploy AWS VPC
         working-directory: ./aws/vpc
         run: |
@@ -164,15 +95,6 @@ jobs:
             CockroachDBDsnForTag=/miyamo-today/cicd/prod/cockroachdb/dsn/tag \
             BloggingEventsTableName=/miyamo-today/cicd/prod/dynamodb/blogging-events/name \
             --no-fail-on-empty-changeset \
-
-      - name: Deploy Cognito
-        working-directory: ./aws/cognito
-        run: |
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-cognito-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            --no-fail-on-empty-changeset
 
       - name: Deploy AWS API Gateway
         working-directory: ./aws/api-gateway
