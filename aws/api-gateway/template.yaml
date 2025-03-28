@@ -36,6 +36,7 @@ Parameters:
 Resources:
   MiyamoTodayAPIAPIGateway:
     Type: AWS::ApiGatewayV2::Api
+    DeletionPolicy: Retain
     Properties:
       Name: !Sub miyamo-today-api-api-gateway-${Env}
       ProtocolType: HTTP
@@ -77,6 +78,7 @@ Resources:
 
   MiyamoTodayAPIAPIGatewayStage:
     Type: AWS::ApiGatewayV2::Stage
+    DeletionPolicy: Retain
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       StageName: "$default"
@@ -107,6 +109,7 @@ Resources:
 
   MiyamoTodayAPIAPIGatewayPOSTProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
+    DeletionPolicy: Retain
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: POST /{proxy+}
@@ -119,6 +122,7 @@ Resources:
 
   MiyamoTodayAPIAPIGatewayGETProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
+    DeletionPolicy: Retain
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: GET /{proxy+}
@@ -131,6 +135,7 @@ Resources:
 
   MiyamoTodayAPIAPIGatewayOPTIONSProxyPlusRoute:
     Type: AWS::ApiGatewayV2::Route
+    DeletionPolicy: Retain
     Properties:
       ApiId: !Ref MiyamoTodayAPIAPIGateway
       RouteKey: OPTIONS /{proxy+}
@@ -141,6 +146,7 @@ Resources:
 
   MiyamoTodayAPIAPIGatewayLogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
     Properties:
       LogGroupName: !Sub "/aws/api-gateway/${MiyamoTodayAPIAPIGateway}"
 
