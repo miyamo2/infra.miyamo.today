@@ -45,7 +45,9 @@ jobs:
         working-directory: ${{ runner.home }}
         run: |
           mkdir -p .kube
-          touch config
+          echo "" > .kube/config
+          chmod 777 .kube/config
+          
 
       - name: Set up terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
