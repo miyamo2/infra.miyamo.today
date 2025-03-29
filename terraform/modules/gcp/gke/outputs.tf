@@ -17,10 +17,6 @@ output "node_tag" {
   value = local.cluster_node_tag
 }
 
-output "configpath" {
-  value = pathexpand("~/.kube/config")
-}
-
 output "config_context" {
   value = "gke_${google_container_cluster.this.project}_${google_container_cluster.this.location}_${google_container_cluster.this.name}"
 }

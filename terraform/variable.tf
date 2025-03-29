@@ -145,3 +145,8 @@ variable "domain_names" {
   type     = list(string)
   nullable = false
 }
+
+variable "kubeconfig_path" {
+    type      = string
+    default = "~/.kube/config"
+}

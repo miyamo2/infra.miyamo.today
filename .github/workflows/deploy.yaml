@@ -50,12 +50,12 @@ jobs:
       - name: Set up terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
+          terraform_version: "1.11.2"
           terraform_wrapper: false
 
-      - name: Deploy CockroachDB
+      - name: Apply terraform
         env:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-          HOME: ${{ runner.home }}
         working-directory: ./terraform
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}" \
@@ -64,6 +64,7 @@ jobs:
           export TF_LOG_CORE=ERROR
           export TF_LOG_PROVIDER=ERROR
           terraform apply \
+            -var 'kubeconfig_path=${{ runner.home }}/.kube/config' \
             -var-file=tfvars.json \
             -auto-approve 
 

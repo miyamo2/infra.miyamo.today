@@ -77,13 +77,13 @@ module "gke" {
 
 provider "helm" {
   kubernetes {
-    config_path    = module.gke.configpath
+    config_path    = pathexpand(var.kubeconfig_path)
     config_context = module.gke.config_context
   }
 }
 
 provider "kubernetes" {
-  config_path    = module.gke.configpath
+  config_path    = pathexpand(var.kubeconfig_path)
   config_context = module.gke.config_context
 }
 
