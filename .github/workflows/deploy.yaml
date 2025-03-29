@@ -41,13 +41,25 @@ jobs:
         run: |
           aws s3 cp s3://${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}/vars/tfvars.json ./terraform/tfvars.json
 
-      - name: Generate empty kubeconfig
-        working-directory: ${{ runner.home }}
+      - name: Read tfvars
+        id: read_tfvars
         run: |
-          mkdir -p .kube
-          echo "" > .kube/config
-          chmod 777 .kube/config
-          
+          CONTENT=`cat ./terraform/tfvars.json`
+          echo "::add-mask::$CONTENT"
+          CONTENT="${CONTENT//'%'/'%25'}"
+          echo "::add-mask::$CONTENT"
+          CONTENT="${CONTENT//$'\n'/'%0A'}"
+          echo "::add-mask::$CONTENT"
+          CONTENT="${CONTENT//$'\r'/'%0D'}"
+          echo "::add-mask::$CONTENT"
+          echo "::set-output name=json::$content"
+
+      - name: kubeconfig
+        env:
+          CLUSTER_NAME: ${{fromJson(steps.read_tfvars.outputs.json).cluster_name}}
+          ZONE: ${{fromJson(steps.read_tfvars.outputs.json).zone}}
+        run: |
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone=${{ env.ZONE }} > /dev/null
 
       - name: Set up terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
@@ -66,7 +78,6 @@ jobs:
           export TF_LOG_CORE=ERROR
           export TF_LOG_PROVIDER=ERROR
           terraform apply \
-            -var 'kubeconfig_path=${{ runner.home }}/.kube/config' \
             -var-file=tfvars.json \
             -auto-approve 
 
