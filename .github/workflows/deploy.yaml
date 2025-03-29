@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - main
-  repository_dispatch:
-    types:
-      - update_miyamo-today-api-federator_ecr
-      - update_miyamo-today-api-article_ecr
-      - update_miyamo-today-api-tag_ecr
-      - update_miyamo-today-api-blogging-event_ecr
   workflow_dispatch:
 
 permissions: write-all
@@ -34,82 +28,54 @@ jobs:
           aws-region: ap-northeast-1
           mask-aws-account-id: true
 
-      - name: Deploy AWS VPC
-        working-directory: ./aws/vpc
-        run: |
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-vpc-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            --no-fail-on-empty-changeset
+      - id: auth
+        uses: google-github-actions/auth@71f986410dfbc7added4569d411d040a91dc6935 # v2.1.8
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - name: Deploy AWS ECR
-        working-directory: ./aws/ecr
-        run: |
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecr-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            --no-fail-on-empty-changeset
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
 
-      - name: Deploy AWS ECS
-        working-directory: ./aws/ecs
+      - name: Get tf.vars
         run: |
-          if ssm get-parameters --names /miyamo-today/cicd/prod/ecr/article-service/tag --output text --query Parameters[0].Value | grep "None"; then
-            exit 0
-          fi
-          if ssm get-parameters --names /miyamo-today/cicd/prod/ecr/tag-service/tag --output text --query Parameters[0].Value | grep "None"; then
-            exit 0
-          fi
-          if ssm get-parameters --names /miyamo-today/cicd/prod/ecr/blogging-event-service/tag --output text --query Parameters[0].Value | grep "None"; then
-            exit 0
-          fi
-          if aws ssm get-parameters --names /miyamo-today/cicd/prod/ecr/federator/tag --output text --query Parameters[0].Value | grep "None"; then
-            exit 0
-          fi
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-ecs-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            NewRelicAppNameForFederator=miyamo-today-api-federator-prod \
-            NewRelicAppNameForArticleService=miyamo-today-api-article-service-prod \
-            NewRelicAppNameForTagService=miyamo-today-api-tag-service-prod \
-            NewRelicAppNameForBloggingEventService=miyamo-today-api-blogging-event-service-prod \
-            NewRelicLicenseKey=${{ secrets.NEW_RELIC_LICENSE_KEY }} \
-            S3BucketForImage=${{ secrets.S3_BUCKET_FOR_IMAGE }} \
-            CDNHostForImage=${{ secrets.CDN_HOST_FOR_IMAGE }} \
-            VpcId=/miyamo-today/cicd/prod/vpc/id \
-            PublicSubnetOneId=/miyamo-today/cicd/prod/subnet/public/one/id \
-            ServiceDiscoveryNamespaceId=/miyamo-today/cicd/prod/service-discovery/namespace/internal/id \
-            ServiceDiscoveryNamespaceName=/miyamo-today/cicd/prod/service-discovery/namespace/internal/name \
-            MiyamoTodayAPIServiceSecurityGroup=/miyamo-today/cicd/prod/ec2/security-group/id \
-            MiyamoTodayAPIFederatorECRRepositoryName=/miyamo-today/cicd/prod/ecr/federator/name \
-            MiyamoTodayAPIFederatorECRRepositoryImageTag=/miyamo-today/cicd/prod/ecr/federator/tag \
-            MiyamoTodayAPIArticleECRRepositoryName=/miyamo-today/cicd/prod/ecr/article-service/name \
-            MiyamoTodayAPIArticleECRRepositoryImageTag=/miyamo-today/cicd/prod/ecr/article-service/tag \
-            MiyamoTodayAPITagECRRepositoryName=/miyamo-today/cicd/prod/ecr/tag-service/name \
-            MiyamoTodayAPITagECRRepositoryImageTag=/miyamo-today/cicd/prod/ecr/tag-service/tag \
-            MiyamoTodayAPIBloggingEventECRRepositoryName=/miyamo-today/cicd/prod/ecr/blogging-event-service/name \
-            MiyamoTodayAPIBloggingEventECRRepositoryImageTag=/miyamo-today/cicd/prod/ecr/blogging-event-service/tag \
-            CockroachDBDsnForArticle=/miyamo-today/cicd/prod/cockroachdb/dsn/article \
-            CockroachDBDsnForTag=/miyamo-today/cicd/prod/cockroachdb/dsn/tag \
-            BloggingEventsTableName=/miyamo-today/cicd/prod/dynamodb/blogging-events/name \
-            --no-fail-on-empty-changeset \
+          aws s3 cp s3://${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}/vars/tfvars.json ./terraform/tfvars.json
 
-      - name: Deploy AWS API Gateway
-        working-directory: ./aws/api-gateway
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_wrapper: false
+
+      - name: Deploy CockroachDB
+        env:
+          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+        working-directory: ./terraform
         run: |
-          if aws ssm get-parameters --names /miyamo-today/cicd/prod/service-discovery/miyamo-today-api/arn --output text --query Parameters[0].Value | grep "None"; then
-            exit 0
-          fi
-          sam package --output-template-file packaged.yaml --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET_NAME }}
-          sam deploy --template-file packaged.yaml --stack-name miyamo-today-cloud-infra-api-gateway-prod --capabilities CAPABILITY_IAM \
-            --parameter-overrides \
-            Env=prod \
-            VpcId=/miyamo-today/cicd/prod/vpc/id \
-            PublicSubnetOneId=/miyamo-today/cicd/prod/subnet/public/one/id \
-            MiyamoTodayAPIServiceSecurityGroup=/miyamo-today/cicd/prod/ec2/security-group/id \
-            MiyamoTodayAPIServiceDiscoveryServiceArn=/miyamo-today/cicd/prod/service-discovery/miyamo-today-api/arn \
-            CognitoUserPoolId=/miyamo-today/cicd/prod/cognito/user-pool/id \
-            CognitoUserPoolClientId=/miyamo-today/cicd/prod/cognito/user-pool-client/id \
-            --no-fail-on-empty-changeset
+          terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}" \
+            -backend-config="key=state/terraform.tfstate"
+          export TF_LOG=ERROR
+          export TF_LOG_CORE=ERROR
+          export TF_LOG_PROVIDER=ERROR
+          terraform apply \
+            -var-file=tfvars.json \
+            -auto-approve 
+
+      - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
+
+      - name: Migration for Article DB
+        working-directory: ./migration/article
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/article --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgres
+          goose up -dir ./
+
+      - name: Migration for Tag DB
+        working-directory: ./migration/tag
+        run: |
+          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
+          echo "::add-mask::$CONNECTION_STRING"
+          export GOOSE_DBSTRING=$CONNECTION_STRING
+          export GOOSE_DRIVER=postgres
+          goose up -dir ./
