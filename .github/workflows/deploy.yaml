@@ -42,8 +42,10 @@ jobs:
           aws s3 cp s3://${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}/vars/tfvars.json ./terraform/tfvars.json
 
       - name: Generate empty kubeconfig
+        working-directory: ${{ runner.home }}
         run: |
-          touch ${{ runner.home }}/.kube/config
+          mkdir -p .kube
+          touch config
 
       - name: Set up terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
@@ -53,6 +55,7 @@ jobs:
       - name: Deploy CockroachDB
         env:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+          HOME: ${{ runner.home }}
         working-directory: ./terraform
         run: |
           terraform init -backend-config="bucket=${{ secrets.TF_ARTIFACTS_BUCKET_NAME }}" \
