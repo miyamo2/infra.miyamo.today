@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "this" {
   statement {
     resources = [
       var.blogging_events_table_arn,
-      var.images_bucket_arn,
+      format("%s/*", var.images_bucket_arn),
     ]
     actions = [
       "dynamodb:GetItem",
@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "this" {
 }
 
 resource "aws_iam_user_policy" "this" {
-  name   = "test"
+  name   = "blogging-events-policy"
   user   = aws_iam_user.this.name
   policy = data.aws_iam_policy_document.this.json
 }
