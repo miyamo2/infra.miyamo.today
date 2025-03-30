@@ -12,6 +12,7 @@ data "aws_iam_policy_document" "this" {
   statement {
     resources = [
       var.blogging_events_table_arn,
+      var.images_bucket_arn,
     ]
     actions = [
       "dynamodb:GetItem",
@@ -26,6 +27,9 @@ data "aws_iam_policy_document" "this" {
       "dynamodb:PartiQLSelect",
       "dynamodb:DescribeEndpoints",
       "dynamodb:DescribeTable",
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
     ]
     effect = "Allow"
   }

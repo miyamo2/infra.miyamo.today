@@ -119,7 +119,7 @@ variable "cdn_host" {
   sensitive = true
 }
 
-variable "s3_bucket" {
+variable "s3_bucket_for_images" {
   type      = string
   nullable  = false
   sensitive = true

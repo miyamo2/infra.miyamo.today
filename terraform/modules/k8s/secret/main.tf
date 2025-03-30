@@ -13,7 +13,7 @@ resource "kubernetes_secret" "secret_article_service" {
 
 resource "terraform_data" "rollout_article_service" {
   triggers_replace = {
-    secret_article_service = kubernetes_secret.secret_article_service.metadata[0].uid
+    secret_article_service = kubernetes_secret.secret_article_service.data
   }
   provisioner "local-exec" {
     command    = <<EOF
@@ -38,7 +38,7 @@ resource "kubernetes_secret" "secret_tag_service" {
 
 resource "terraform_data" "rollout_tag_service" {
   triggers_replace = {
-    secret_tag_service = kubernetes_secret.secret_tag_service.metadata[0].uid
+    secret_tag_service = kubernetes_secret.secret_tag_service.data
   }
   provisioner "local-exec" {
     command    = <<EOF
@@ -59,7 +59,7 @@ resource "kubernetes_secret" "secret_blogging_event_service" {
     PORT                       = var.port_blogging_events
     BLOGGING_EVENTS_TABLE_NAME = var.blogging_events_table_name
     CDN_HOST                   = var.cdn_host
-    S3_BUCKET                  = var.s3_bucket
+    S3_BUCKET                  = var.s3_bucket_for_images
   }
 
   provisioner "local-exec" {
@@ -89,7 +89,7 @@ resource "kubernetes_secret" "secret_federator" {
 
 resource "terraform_data" "rollout_federator" {
   triggers_replace = {
-    secret_federator = kubernetes_secret.secret_federator.metadata[0].uid
+    secret_federator = kubernetes_secret.secret_federator.data
   }
   provisioner "local-exec" {
     command    = <<EOF
@@ -112,8 +112,8 @@ resource "kubernetes_secret" "secret-aws-credentials" {
 
 resource "terraform_data" "rollout_blogging_event_service" {
   triggers_replace = {
-    secret_blogging_event_service = kubernetes_secret.secret_blogging_event_service.metadata[0].uid
-    secret-aws-credentials        = kubernetes_secret.secret-aws-credentials.metadata[0].uid
+    secret_blogging_event_service = kubernetes_secret.secret_blogging_event_service.data
+    secret-aws-credentials        = kubernetes_secret.secret-aws-credentials.data
   }
   provisioner "local-exec" {
     command    = <<EOF

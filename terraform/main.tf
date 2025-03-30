@@ -128,10 +128,16 @@ module "dynamodb" {
   environment  = var.environment
 }
 
+module "s3" {
+  source = "./modules/aws/s3"
+  bucket_name_for_images = var.s3_bucket_for_images
+}
+
 module "aws_iam" {
   source                    = "./modules/aws/iam"
   environment               = var.environment
   blogging_events_table_arn = module.dynamodb.blogging_events_table_arn
+  images_bucket_arn         = module.s3.images_bucket_arn
 }
 
 module "cognito" {
@@ -157,7 +163,7 @@ module "k8s_secret" {
   new_relic_config_app_name_federator      = var.new_relic_config_app_name_federator
   new_relic_config_app_name_tags           = var.new_relic_config_app_name_tags
   new_relic_config_license_key             = var.new_relic_config_license_key
-  s3_bucket                                = var.s3_bucket
+  s3_bucket_for_images                                = var.s3_bucket_for_images
   cockroachdb_dsn_articles                 = module.cockroach.dsn_article
   cockroachdb_dsn_tags                     = module.cockroach.dsn_tag
   blogging_events_table_name               = module.dynamodb.blogging_events_table_name
