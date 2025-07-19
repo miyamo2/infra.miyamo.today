@@ -129,7 +129,7 @@ module "dynamodb" {
 }
 
 module "s3" {
-  source = "./modules/aws/s3"
+  source                 = "./modules/aws/s3"
   bucket_name_for_images = var.s3_bucket_for_images
 }
 
@@ -163,7 +163,7 @@ module "k8s_secret" {
   new_relic_config_app_name_federator      = var.new_relic_config_app_name_federator
   new_relic_config_app_name_tags           = var.new_relic_config_app_name_tags
   new_relic_config_license_key             = var.new_relic_config_license_key
-  s3_bucket_for_images                                = var.s3_bucket_for_images
+  s3_bucket_for_images                     = var.s3_bucket_for_images
   cockroachdb_dsn_articles                 = module.cockroach.dsn_article
   cockroachdb_dsn_tags                     = module.cockroach.dsn_tag
   blogging_events_table_name               = module.dynamodb.blogging_events_table_name
@@ -177,7 +177,9 @@ module "k8s_secret" {
 
 module "gh_secret" {
   source                          = "./modules/github/secret"
-  github_token                    = var.github_token
+  app_id                          = var.gh_app_id
+  installation_id                 = var.gh_installation_id
+  secret                          = var.gh_secret
   application_repository_name     = var.application_repository_name
   manifest_repository_name        = var.manifest_repository_name
   gcp_project_id                  = var.gcp_project_id

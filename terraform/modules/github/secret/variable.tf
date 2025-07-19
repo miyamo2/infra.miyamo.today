@@ -31,3 +31,20 @@ variable "gcp_region" {
   nullable = false
 }
 
+variable "app_id" {
+  type     = string
+  nullable = false
+  sensitive = true
+}
+
+variable "installation_id" {
+  type     = string
+  nullable = false
+  sensitive = true
+}
+
+variable "secret" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}

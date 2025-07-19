@@ -15,7 +15,12 @@ locals {
 }
 
 provider "github" {
-  token = var.github_token
+  owner = "miyamo2"
+  app_auth {
+    id              = var.app_id
+    installation_id = var.installation_id
+    pem_file        = var.secret
+  }
 }
 
 resource "github_actions_secret" "gcp_project_id" {

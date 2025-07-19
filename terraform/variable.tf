@@ -150,3 +150,21 @@ variable "kubeconfig_path" {
     type      = string
     default = "~/.kube/config"
 }
+
+variable "gh_app_id" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "gh_installation_id" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "gh_secret" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
