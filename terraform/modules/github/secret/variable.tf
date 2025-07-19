@@ -1,9 +1,3 @@
-variable "github_token" {
-  type      = string
-  nullable  = false
-  sensitive = true
-}
-
 variable "application_repository_name" {
   type     = string
   nullable = false

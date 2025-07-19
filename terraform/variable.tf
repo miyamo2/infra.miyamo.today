@@ -135,12 +135,6 @@ variable "manifest_repository_name" {
   nullable = false
 }
 
-variable "github_token" {
-  type      = string
-  nullable  = false
-  sensitive = true
-}
-
 variable "domain_names" {
   type     = list(string)
   nullable = false

@@ -40,7 +40,7 @@ resource "google_container_cluster" "this" {
   private_cluster_config {
     enable_private_nodes    = true
     enable_private_endpoint = false
-    master_ipv4_cidr_block  = "10.100.0.0/28"
+    master_ipv4_cidr_block  = "10.101.0.0/28"
   }
 
   remove_default_node_pool = true
@@ -62,7 +62,7 @@ resource "google_service_account" "this" {
 locals {
   nodepool_sa_roles = {
     node-service-account = {
-      name = "node-searvice-account"
+      name = "node-service-account"
       role = "roles/container.nodeServiceAccount"
     },
     artifact-registry-reader = {
@@ -88,7 +88,7 @@ resource "google_compute_firewall" "this" {
     protocol = "tcp"
     ports    = ["8443"]
   }
-  source_ranges = ["10.100.0.0/28"]
+  source_ranges = ["10.101.0.0/28"]
   target_tags   = [local.cluster_node_tag]
 }
 

@@ -33,3 +33,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 .idea/
+
+tfvars*
+
+.terraform.lock.hcl
