@@ -52,17 +52,6 @@ resource "google_container_cluster" "this" {
   workload_identity_config {
     workload_pool = format("%s.svc.id.goog", var.project_id)
   }
-
-  monitoring_config {
-    managed_prometheus {
-      enabled = false
-    }
-    advanced_datapath_observability_config {
-      enable_metrics = false
-      enable_relay   = false
-    }
-  }
-
 }
 
 resource "google_service_account" "this" {

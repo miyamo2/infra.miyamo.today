@@ -141,8 +141,8 @@ variable "domain_names" {
 }
 
 variable "kubeconfig_path" {
-  type    = string
-  default = "~/.kube/config"
+    type      = string
+    default = "~/.kube/config"
 }
 
 variable "gh_app_id" {
