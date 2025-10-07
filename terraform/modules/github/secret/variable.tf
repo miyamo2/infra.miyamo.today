@@ -14,12 +14,6 @@ variable "gcp_project_id" {
   sensitive = true
 }
 
-variable "gcp_service_account_credentials" {
-  type      = string
-  nullable  = false
-  sensitive = true
-}
-
 variable "gcp_region" {
   type     = string
   nullable = false

@@ -30,12 +30,6 @@ resource "github_actions_secret" "gcp_project_id" {
   plaintext_value = var.gcp_project_id
 }
 
-resource "github_actions_secret" "gcp_service_account_credentials" {
-  repository      = var.application_repository_name
-  secret_name     = "GCP_SERVICE_ACCOUNT_CREDENTIALS"
-  plaintext_value = var.gcp_service_account_credentials
-}
-
 resource "github_actions_secret" "gcp_region" {
   for_each        = toset(local.repository_names)
   repository      = each.value
