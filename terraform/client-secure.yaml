@@ -25,9 +25,6 @@ spec:
   - name: cockroachdb-client-secure
     image: cockroachdb/cockroach:v25.3.2 # Change to cockroachdb/cockroach:{version}
     imagePullPolicy: IfNotPresent
-    volumeMounts:
-    - name: client-certs
-      mountPath: /cockroach/cockroach-certs/
     command:
     - sleep
     - "2147483648" # 2^31
