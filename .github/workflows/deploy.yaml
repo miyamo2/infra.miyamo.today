@@ -89,7 +89,7 @@ jobs:
 
       - name: port-forwarding cockroachdb-public service
         run: |
-          nohup kubectl port-forward service/cockroachdb-public 8080 &
+          nohup kubectl port-forward service/cockroachdb-public 8080:26257 &
 
       - name: Migration for Article DB
         working-directory: ./migration/article
