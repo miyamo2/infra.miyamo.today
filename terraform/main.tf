@@ -176,12 +176,12 @@ module "k8s_secret" {
 }
 
 module "gh_secret" {
-  source                          = "./modules/github/secret"
-  app_id                          = var.gh_app_id
-  installation_id                 = var.gh_installation_id
-  secret                          = var.gh_secret
-  application_repository_name     = var.application_repository_name
-  manifest_repository_name        = var.manifest_repository_name
-  gcp_project_id                  = var.gcp_project_id
-  gcp_region                      = var.gcp_region
+  source                      = "./modules/github/secret"
+  app_id                      = var.gh_app_id
+  installation_id             = var.gh_installation_id
+  secret                      = var.gh_secret
+  application_repository_name = var.application_repository_name
+  manifest_repository_name    = var.manifest_repository_name
+  gcp_project_id              = var.gcp_project_id
+  gcp_region                  = var.gcp_region
 }
