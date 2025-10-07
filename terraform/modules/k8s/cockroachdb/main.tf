@@ -1,13 +1,6 @@
-resource "kubernetes_namespace" "this" {
-  metadata {
-    name = "cockroachdb"
-  }
-}
-
 resource "helm_release" "this" {
   name       = "cockroachdb"
   chart      = "cockroachdb"
-  namespace  = "cockroachdb"
   repository = "https://charts.cockroachdb.com/"
 
   # see: https://github.com/cockroachdb/helm-charts/blob/master/cockroachdb/README.md#configuration
@@ -56,9 +49,6 @@ resource "helm_release" "this" {
     value = "false"
   }
   wait = false
-  depends_on = [
-    kubernetes_namespace.this
-  ]
 }
 
 resource "terraform_data" "clusterrolebinding" {
@@ -68,7 +58,7 @@ resource "terraform_data" "clusterrolebinding" {
   }
   provisioner "local-exec" {
     command = <<EOF
-      kubectl create -f client-secure.yaml -n cockroachdb
+      kubectl create -f client-secure.yaml
     EOF
   }
 }

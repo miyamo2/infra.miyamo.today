@@ -69,7 +69,7 @@ jobs:
 
       - name: Create User and Database
         run: |
-          kubectl exec -it cockroachdb-client-secure -n cockroachdb -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public --insecure
+          kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public --insecure
           CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;
           CREATE USER IF NOT EXISTS miyamo2;
           CREATE DATABASE IF NOT EXISTS article;
@@ -79,7 +79,7 @@ jobs:
 
       - name: port-forwarding cockroachdb-public service
         run: |
-          nohup kubectl port-forward service/cockroachdb-public 8080 -n cockroachdb &
+          nohup kubectl port-forward service/cockroachdb-public 8080 &
 
       - name: Migration for Article DB
         working-directory: ./migration/article
