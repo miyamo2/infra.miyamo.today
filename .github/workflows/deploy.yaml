@@ -81,7 +81,9 @@ jobs:
           -e "CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;" \
           -e "CREATE USER IF NOT EXISTS miyamo2;" \
           -e "CREATE DATABASE IF NOT EXISTS article;" \
-          -e "CREATE DATABASE IF NOT EXISTS tag;"
+          -e "CREATE DATABASE IF NOT EXISTS tag;" \
+          -e "GRANT ALL ON DATABASE article TO goose_user WITH GRANT OPTION;" \
+          -e "GRANT ALL ON DATABASE tag TO goose_user WITH GRANT OPTION;" \
 
       - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
 
