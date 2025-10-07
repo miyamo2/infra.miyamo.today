@@ -32,17 +32,3 @@ spec:
     - sleep
     - "2147483648" # 2^31
   terminationGracePeriodSeconds: 300
-  volumes:
-  - name: client-certs
-    projected:
-        sources:
-          - secret:
-              name: cockroachdb-client-secret # Change to {release}-client-secret
-              items:
-                - key: ca.crt
-                  path: ca.crt
-                - key: tls.crt
-                  path: client.root.crt
-                - key: tls.key
-                  path: client.root.key
-        defaultMode: 256
