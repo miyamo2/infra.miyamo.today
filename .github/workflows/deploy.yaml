@@ -67,6 +67,14 @@ jobs:
             -var-file=tfvars.json \
             -auto-approve 
 
+      - name: Install kubectl
+        shell: bash
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+          kubectl version --client
+
       - name: Create User and Database
         run: |
           kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public --insecure
@@ -79,7 +87,7 @@ jobs:
 
       - name: port-forwarding cockroachdb-public service
         run: |
-          nohup kubectl port-forward service/cockroachdb-public 8080 &
+          nohup kubectl port-forward service/cockroachdb-public 8080:26257 &
 
       - name: Migration for Article DB
         working-directory: ./migration/article
