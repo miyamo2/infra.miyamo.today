@@ -52,7 +52,7 @@ jobs:
         with:
           terraform_version: "1.11.2"
           terraform_wrapper: false
-          
+
       - name: Apply terraform
         env:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
@@ -66,6 +66,14 @@ jobs:
           terraform apply \
             -var-file=tfvars.json \
             -auto-approve 
+
+      - name: Create User and Database
+        run: |
+          kubectl exec -it cockroachdb-client-secure -n cockroachdb -- ./cockroach sql --certs-dir=/cockroach/cockroach-certs --host=cockroachdb-public --insecure
+          CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;
+          CREATE USER IF NOT EXISTS miyamo2;
+          CREATE DATABASE IF NOT EXISTS article;
+          CREATE DATABASE IF NOT EXISTS tag;
 
       - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
 
