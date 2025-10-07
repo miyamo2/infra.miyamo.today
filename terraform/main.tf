@@ -116,12 +116,6 @@ module "k8s_argocd" {
   config_context = module.gke.config_context
 }
 
-module "gar" {
-  source         = "./modules/gcp/gar"
-  project_id     = var.gcp_project_id
-  project_number = var.gcp_project_number
-}
-
 module "dynamodb" {
   source       = "./modules/aws/dynamodb"
   billing_mode = "PROVISIONED"
@@ -183,6 +177,5 @@ module "gh_secret" {
   application_repository_name     = var.application_repository_name
   manifest_repository_name        = var.manifest_repository_name
   gcp_project_id                  = var.gcp_project_id
-  gcp_service_account_credentials = module.gar.credentials
   gcp_region                      = var.gcp_region
 }
