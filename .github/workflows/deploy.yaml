@@ -80,7 +80,7 @@ jobs:
           kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --host=cockroachdb-public --insecure \
           -e "CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;" \
           -e "CREATE USER IF NOT EXISTS miyamo2;" \
-          -e "CRATE DATABASE IF NOT EXISTS article;" \
+          -e "CREATE DATABASE IF NOT EXISTS article;" \
           -e "CREATE DATABASE IF NOT EXISTS tag;"
 
       - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
