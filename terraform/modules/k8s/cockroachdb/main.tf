@@ -51,7 +51,7 @@ resource "helm_release" "this" {
   wait = false
 }
 
-resource "terraform_data" "clusterrolebinding" {
+resource "terraform_data" "client_secure" {
   triggers_replace = {
     "config_context" = var.config_context
     "helm"           = helm_release.this.manifest
