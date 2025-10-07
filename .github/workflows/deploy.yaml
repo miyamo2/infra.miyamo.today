@@ -77,17 +77,17 @@ jobs:
 
       - name: Create User and Database
         run: |
-          kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --host=cockroachdb-public --insecure
-          CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;
-          CREATE USER IF NOT EXISTS miyamo2;
-          CREATE DATABASE IF NOT EXISTS article;
-          CREATE DATABASE IF NOT EXISTS tag;
+          kubectl exec -it cockroachdb-client-secure -- ./cockroach sql --host=cockroachdb-public --insecure \
+          -e "CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;" \
+          -e "CREATE USER IF NOT EXISTS miyamo2;" \
+          -e "CRATE DATABASE IF NOT EXISTS article;" \
+          -e "CREATE DATABASE IF NOT EXISTS tag;"
 
       - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
 
       - name: port-forwarding cockroachdb-public service
         run: |
-          nohup kubectl port-forward service/cockroachdb-public 8080:26257 &
+          nohup kubectl port-forward service/cockroachdb-public 8080 &
 
       - name: Migration for Article DB
         working-directory: ./migration/article
