@@ -1,11 +1,21 @@
+resource "kubernetes_namespace" "this" {
+  metadata {
+    name = "cockroachdb"
+  }
+}
+
 resource "helm_release" "this" {
-  name             = "cockroachdb"
-  chart            = "cockroachdb"
-  namespace        = "cockroachdb"
-  create_namespace = true
-  repository       = "https://charts.cockroachdb.com/"
+  name       = "cockroachdb"
+  chart      = "cockroachdb"
+  namespace  = "cockroachdb"
+  repository = "https://charts.cockroachdb.com/"
 
   # see: https://github.com/cockroachdb/helm-charts/blob/master/cockroachdb/README.md#configuration
+  set {
+    name  = "image.tag"
+    value = "v25.3.2"
+  }
+
   set {
     name  = "statefulset.resources.requests.cpu"
     value = "100m"
@@ -46,4 +56,19 @@ resource "helm_release" "this" {
     value = "false"
   }
   wait = false
+  depends_on = [
+    kubernetes_namespace.this
+  ]
+}
+
+resource "terraform_data" "clusterrolebinding" {
+  triggers_replace = {
+    "config_context" = var.config_context
+    "helm"           = helm_release.this.manifest
+  }
+  provisioner "local-exec" {
+    command = <<EOF
+      kubectl create -f client-secure.yaml
+    EOF
+  }
 }
