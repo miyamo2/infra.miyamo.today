@@ -1,6 +1,7 @@
 resource "helm_release" "this" {
   name             = "cockroachdb"
   chart            = "cockroachdb"
+  namespace        = "cockroachdb"
   create_namespace = true
   repository       = "https://charts.cockroachdb.com/"
 
