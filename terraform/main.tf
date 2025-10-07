@@ -116,6 +116,12 @@ module "k8s_argocd" {
   config_context = module.gke.config_context
 }
 
+module "k8s_cockroachdb" {
+  source         = "./modules/k8s/cockroachdb"
+  config_context = module.gke.config_context
+  sql_user_name  = var.cockroach_sql_user_name
+}
+
 module "gar" {
   source         = "./modules/gcp/gar"
   project_id     = var.gcp_project_id
@@ -148,8 +154,8 @@ module "cognito" {
 module "ssm_parameter" {
   source                           = "./modules/aws/ssm_parameter_store"
   environment                      = var.environment
-  cockroachdb_dsn_articles         = module.cockroach.dsn_article
-  cockroachdb_dsn_tags             = module.cockroach.dsn_tag
+  cockroachdb_dsn_articles         = module.k8s_cockroachdb.dsn_article
+  cockroachdb_dsn_tags             = module.k8s_cockroachdb.dsn_tag
   blogging_events_table_name       = module.dynamodb.blogging_events_table_name
   blogging_events_table_stream_arn = module.dynamodb.blogging_events_table_stream_arn
 }
@@ -164,8 +170,8 @@ module "k8s_secret" {
   new_relic_config_app_name_tags           = var.new_relic_config_app_name_tags
   new_relic_config_license_key             = var.new_relic_config_license_key
   s3_bucket_for_images                     = var.s3_bucket_for_images
-  cockroachdb_dsn_articles                 = module.cockroach.dsn_article
-  cockroachdb_dsn_tags                     = module.cockroach.dsn_tag
+  cockroachdb_dsn_articles                 = module.k8s_cockroachdb.dsn_article
+  cockroachdb_dsn_tags                     = module.k8s_cockroachdb.dsn_tag
   blogging_events_table_name               = module.dynamodb.blogging_events_table_name
   aws_access_key_id                        = module.aws_iam.access_key
   aws_secret_access_key                    = module.aws_iam.secret_key

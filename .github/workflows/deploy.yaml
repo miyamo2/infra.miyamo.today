@@ -69,20 +69,22 @@ jobs:
 
       - uses: mscno/setup-goose@4e17bb129272283b31c353e2ece85e00537f17f5 # v1
 
+      - name: port-forwarding cockroachdb-public service
+        run: |
+          nohup kubectl port-forward service/cockroachdb-public 8080 &
+
       - name: Migration for Article DB
         working-directory: ./migration/article
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_DBSTRING: postgresql://goose_user@localhost:8080/article?sslmode=disable
         run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/article --output text --query Parameters[0].Value)
-          echo "::add-mask::$CONNECTION_STRING"
-          export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgres
           goose up -dir ./
 
       - name: Migration for Tag DB
         working-directory: ./migration/tag
+        env:
+          GOOSE_DRIVER: postgres
+          GOOSE_DBSTRING: postgresql://goose_user@localhost:8080/tag?sslmode=disable
         run: |
-          CONNECTION_STRING=$(aws ssm get-parameters --names /miyamo-today/cicd/prod/cockroachdb/dsn/tag --output text --query Parameters[0].Value)
-          echo "::add-mask::$CONNECTION_STRING"
-          export GOOSE_DBSTRING=$CONNECTION_STRING
-          export GOOSE_DRIVER=postgres
           goose up -dir ./
