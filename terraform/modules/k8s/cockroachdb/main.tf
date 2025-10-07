@@ -68,7 +68,7 @@ resource "terraform_data" "clusterrolebinding" {
   }
   provisioner "local-exec" {
     command = <<EOF
-      kubectl create -f client-secure.yaml
+      kubectl create -f client-secure.yaml -n cockroachdb
     EOF
   }
 }
