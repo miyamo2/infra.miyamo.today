@@ -120,6 +120,12 @@ module "k8s_cockroachdb" {
   source         = "./modules/k8s/cockroachdb"
   config_context = module.gke.config_context
   sql_user_name  = var.cockroach_sql_user_name
+  depends_on     = [module.gke]
+}
+
+module "k8s_keda" {
+  source     = "./modules/k8s/keda"
+  depends_on = [module.gke]
 }
 
 module "dynamodb" {
