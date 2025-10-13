@@ -151,34 +151,30 @@ module "cognito" {
   environment = var.environment
 }
 
-module "ssm_parameter" {
-  source                           = "./modules/aws/ssm_parameter_store"
-  environment                      = var.environment
-  cockroachdb_dsn_articles         = module.k8s_cockroachdb.dsn_article
-  cockroachdb_dsn_tags             = module.k8s_cockroachdb.dsn_tag
-  blogging_events_table_name       = module.dynamodb.blogging_events_table_name
-  blogging_events_table_stream_arn = module.dynamodb.blogging_events_table_stream_arn
-}
-
 module "k8s_secret" {
-  source                                   = "./modules/k8s/secret"
-  config_context                           = module.gke.config_context
-  cdn_host                                 = var.cdn_host
-  new_relic_config_app_name_articles       = var.new_relic_config_app_name_articles
-  new_relic_config_app_name_blogging_event = var.new_relic_config_app_name_blogging_event
-  new_relic_config_app_name_federator      = var.new_relic_config_app_name_federator
-  new_relic_config_app_name_tags           = var.new_relic_config_app_name_tags
-  new_relic_config_license_key             = var.new_relic_config_license_key
-  s3_bucket_for_images                     = var.s3_bucket_for_images
-  cockroachdb_dsn_articles                 = module.k8s_cockroachdb.dsn_article
-  cockroachdb_dsn_tags                     = module.k8s_cockroachdb.dsn_tag
-  blogging_events_table_name               = module.dynamodb.blogging_events_table_name
-  aws_access_key_id                        = module.aws_iam.access_key
-  aws_secret_access_key                    = module.aws_iam.secret_key
-  aws_region                               = "ap-northeast-1"
-  cognito_user_pool_id                     = module.cognito.cognito_user_pool_id
-  cognito_user_pool_client_id              = module.cognito.cognito_user_pool_client_id
-  cognito_user_pool_domain                 = module.cognito.cognito_user_pool_domain
+  source                                       = "./modules/k8s/secret"
+  config_context                               = module.gke.config_context
+  cdn_host                                     = var.cdn_host
+  new_relic_config_app_name_articles           = var.new_relic_config_app_name_articles
+  new_relic_config_app_name_blogging_event     = var.new_relic_config_app_name_blogging_event
+  new_relic_config_app_name_federator          = var.new_relic_config_app_name_federator
+  new_relic_config_app_name_tags               = var.new_relic_config_app_name_tags
+  new_relic_config_license_key                 = var.new_relic_config_license_key
+  s3_bucket_for_images                         = var.s3_bucket_for_images
+  cockroachdb_dsn_articles                     = module.k8s_cockroachdb.dsn_article
+  cockroachdb_dsn_tags                         = module.k8s_cockroachdb.dsn_tag
+  blogging_events_table_name                   = module.dynamodb.blogging_events_table_name
+  aws_access_key_id                            = module.aws_iam.access_key
+  aws_secret_access_key                        = module.aws_iam.secret_key
+  aws_region                                   = "ap-northeast-1"
+  cognito_user_pool_id                         = module.cognito.cognito_user_pool_id
+  cognito_user_pool_client_id                  = module.cognito.cognito_user_pool_client_id
+  cognito_user_pool_domain                     = module.cognito.cognito_user_pool_domain
+  blogging_events_table_stream_arn             = module.dynamodb.blogging_events_table_stream_arn
+  environment                                  = var.environment
+  github_token                                 = var.gh_token
+  new_relic_config_app_name_read_model_updater = var.new_relic_config_app_name_read_model_updater
+  blog_publish_endpoint                        = var.blog_publish_endpoint
 }
 
 module "gh_secret" {

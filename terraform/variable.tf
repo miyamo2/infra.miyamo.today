@@ -107,6 +107,12 @@ variable "new_relic_config_app_name_federator" {
   sensitive = true
 }
 
+variable "new_relic_config_app_name_read_model_updater" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
 variable "new_relic_config_license_key" {
   type      = string
   nullable  = false
@@ -158,6 +164,19 @@ variable "gh_installation_id" {
 }
 
 variable "gh_secret" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "gh_token" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+
+variable "blog_publish_endpoint" {
   type      = string
   nullable  = false
   sensitive = true

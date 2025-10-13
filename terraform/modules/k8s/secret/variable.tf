@@ -134,3 +134,37 @@ variable "cognito_user_pool_domain" {
   nullable  = false
   sensitive = true
 }
+
+variable "environment" {
+  type     = string
+  nullable = false
+}
+
+variable "blogging_events_table_stream_arn" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "new_relic_config_app_name_read_model_updater" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "github_token" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "blog_publish_endpoint" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "service_name_read_model_updater" {
+  type    = string
+  default = "read_model_updater"
+}

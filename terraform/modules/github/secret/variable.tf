@@ -20,14 +20,14 @@ variable "gcp_region" {
 }
 
 variable "app_id" {
-  type     = string
-  nullable = false
+  type      = string
+  nullable  = false
   sensitive = true
 }
 
 variable "installation_id" {
-  type     = string
-  nullable = false
+  type      = string
+  nullable  = false
   sensitive = true
 }
 

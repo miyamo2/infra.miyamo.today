@@ -61,13 +61,6 @@ resource "kubernetes_secret" "secret_blogging_event_service" {
     CDN_HOST                   = var.cdn_host
     S3_BUCKET                  = var.s3_bucket_for_images
   }
-
-  provisioner "local-exec" {
-    command    = <<EOF
-    kubectl rollout restart deployment/blogging-event-service
-    EOF
-    on_failure = continue
-  }
 }
 
 resource "kubernetes_secret" "secret_federator" {
@@ -120,5 +113,24 @@ resource "terraform_data" "rollout_blogging_event_service" {
     kubectl rollout restart deployment/blogging-event-service
     EOF
     on_failure = continue
+  }
+}
+
+resource "kubernetes_secret" "secret_read_model_updater" {
+  metadata {
+    name = "secret-read-model-updater"
+  }
+  data = {
+    SERVICE_NAME                     = var.service_name_read_model_updater
+    NEW_RELIC_CONFIG_APP_NAME        = var.new_relic_config_app_name_articles
+    NEW_RELIC_CONFIG_LICENSE         = var.new_relic_config_license_key
+    NEW_RELIC_CONFIG_APP_NAME        = var.new_relic_config_app_name_read_model_updater
+    ENV                              = var.environment
+    BLOGGING_EVENTS_TABLE_NAME       = var.blogging_events_table_name
+    BLOGGING_EVENTS_TABLE_STREAM_ARN = var.blogging_events_table_stream_arn
+    COCKROACHDB_DSN_ARTICLE          = var.cockroachdb_dsn_articles
+    COCKROACHDB_DSN_TAG              = var.cockroachdb_dsn_tags
+    BLOG_PUBLISH_ENDPOINT            = var.blog_publish_endpoint
+    GITHUB_TOKEN                     = var.github_token
   }
 }
