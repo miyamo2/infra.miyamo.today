@@ -140,10 +140,11 @@ module "s3" {
 }
 
 module "aws_iam" {
-  source                    = "./modules/aws/iam"
-  environment               = var.environment
-  blogging_events_table_arn = module.dynamodb.blogging_events_table_arn
-  images_bucket_arn         = module.s3.images_bucket_arn
+  source                           = "./modules/aws/iam"
+  environment                      = var.environment
+  blogging_events_table_arn        = module.dynamodb.blogging_events_table_arn
+  blogging_events_table_stream_arn = module.dynamodb.blogging_events_table_stream_arn
+  images_bucket_arn                = module.s3.images_bucket_arn
 }
 
 module "cognito" {

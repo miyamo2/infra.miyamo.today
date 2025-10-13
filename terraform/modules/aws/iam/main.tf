@@ -13,6 +13,7 @@ data "aws_iam_policy_document" "this" {
     resources = [
       var.blogging_events_table_arn,
       format("%s/*", var.images_bucket_arn),
+      var.blogging_events_table_stream_arn,
     ]
     actions = [
       "dynamodb:GetItem",
