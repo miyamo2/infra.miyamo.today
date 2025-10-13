@@ -52,13 +52,9 @@ resource "helm_release" "this" {
 }
 
 resource "terraform_data" "client_secure" {
-  triggers_replace = {
-    "config_context" = var.config_context
-    "helm"           = helm_release.this.manifest
-  }
   provisioner "local-exec" {
     command = <<EOF
-      kubectl create -f client-secure.yaml
+      kubectl create client-secure.yaml
     EOF
   }
 }
