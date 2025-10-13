@@ -54,7 +54,7 @@ resource "helm_release" "this" {
 resource "terraform_data" "client_secure" {
   provisioner "local-exec" {
     command = <<EOF
-      kubectl create client-secure.yaml
+      kubectl create -f client-secure.yaml
     EOF
   }
 }
