@@ -129,9 +129,10 @@ module "k8s_keda" {
 }
 
 module "k8s_newrelic" {
-  source      = "./modules/k8s/newrelic"
-  license_key = var.new_relic_config_license_key
-  depends_on  = [module.gke]
+  source         = "./modules/k8s/newrelic"
+  license_key    = var.new_relic_config_license_key
+  config_context = module.gke.config_context
+  depends_on     = [module.gke]
 }
 
 
