@@ -29,6 +29,7 @@ data "aws_iam_policy_document" "this" {
       "dynamodb:DescribeEndpoints",
       "dynamodb:DescribeTable",
       "dynamodb:DescribeStream",
+      "dynamodb:ListTables",
       "dynamodb:GetRecords",
       "dynamodb:GetShardIterator",
       "dynamodb:ListStreams",
