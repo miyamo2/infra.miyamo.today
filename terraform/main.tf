@@ -128,6 +128,13 @@ module "k8s_keda" {
   depends_on = [module.gke]
 }
 
+module "k8s_newrelic" {
+  source      = "./modules/k8s/newrelic"
+  license_key = var.new_relic_config_license_key
+  depends_on  = [module.gke]
+}
+
+
 module "dynamodb" {
   source       = "./modules/aws/dynamodb"
   billing_mode = "PROVISIONED"
