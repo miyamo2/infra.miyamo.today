@@ -66,3 +66,15 @@ resource "helm_release" "this" {
     value = "false"
   }
 }
+
+resource "terraform_data" "this" {
+  triggers_replace = {
+    "config_context" = var.config_context
+    "manifest"       = helm_release.this
+  }
+  provisioner "local-exec" {
+    command = <<EOF
+      kubectl apply -f ./modules/k8s/newrelic/instrumentation.yaml -n newrelic
+    EOF
+  }
+}

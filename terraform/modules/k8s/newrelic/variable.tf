@@ -3,3 +3,8 @@ variable "license_key" {
   nullable  = false
   sensitive = true
 }
+
+variable "config_context" {
+  type     = string
+  nullable = false
+}
