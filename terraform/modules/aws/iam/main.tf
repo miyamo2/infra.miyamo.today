@@ -12,36 +12,7 @@ data "aws_iam_policy_document" "this" {
   statement {
     resources = [
       var.blogging_events_table_arn,
-      format("%s/*", var.images_bucket_arn),
-      var.blogging_events_table_stream_arn,
-    ]
-    actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-      "dynamodb:DeleteItem",
-      "dynamodb:Scan",
-      "dynamodb:Query",
-      "dynamodb:PartiQLInsert",
-      "dynamodb:PartiQLUpdate",
-      "dynamodb:PartiQLDelete",
-      "dynamodb:PartiQLSelect",
-      "dynamodb:DescribeEndpoints",
-      "dynamodb:DescribeTable",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListTables",
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:ListStreams",
-      "s3:PutObject",
-      "s3:GetObject",
-      "s3:ListBucket",
-    ]
-    effect = "Allow"
-  }
-  statement {
-    resources = [
-      var.blogging_events_table_arn
+      format("%s/*", var.blogging_events_table_arn),
     ]
     actions = [
       "dynamodb:GetItem",
