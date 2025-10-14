@@ -39,6 +39,58 @@ data "aws_iam_policy_document" "this" {
     ]
     effect = "Allow"
   }
+  statement {
+    resources = [
+      var.blogging_events_table_arn
+    ]
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:PartiQLInsert",
+      "dynamodb:PartiQLUpdate",
+      "dynamodb:PartiQLDelete",
+      "dynamodb:PartiQLSelect",
+      "dynamodb:DescribeEndpoints",
+      "dynamodb:DescribeTable",
+    ]
+    effect = "Allow"
+  }
+  statement {
+    resources = [
+      format("%s/*", var.images_bucket_arn),
+    ]
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket",
+    ]
+    effect = "Allow"
+  }
+  statement {
+    resources = [
+      var.blogging_events_table_stream_arn,
+    ]
+    actions = [
+      "dynamodb:DescribeStream",
+      "dynamodb:GetRecords",
+      "dynamodb:GetShardIterator",
+    ]
+    effect = "Allow"
+  }
+  statement {
+    resources = [
+      "*",
+    ]
+    actions = [
+      "dynamodb:ListTables",
+      "dynamodb:ListStreams",
+    ]
+    effect = "Allow"
+  }
 }
 
 resource "aws_iam_user_policy" "this" {
