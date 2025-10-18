@@ -52,6 +52,9 @@ resource "helm_release" "this" {
 }
 
 resource "terraform_data" "client_secure" {
+  triggers_replace = {
+    plantimestamp = plantimestamp()
+  }
   provisioner "local-exec" {
     command = <<EOF
       kubectl create -f client-secure.yaml
