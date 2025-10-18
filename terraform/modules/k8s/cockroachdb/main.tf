@@ -57,7 +57,7 @@ resource "terraform_data" "client_secure" {
   }
   provisioner "local-exec" {
     command = <<EOF
-      kubectl create -f client-secure.yaml
+      kubectl apply -f client-secure.yaml
     EOF
   }
 }
