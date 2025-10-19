@@ -1,6 +1,6 @@
 resource "aws_sqs_queue" "blogging_event" {
-  name = format("blogging_event_queue-%s", var.environment)
-
+  name                       = format("blogging_event_queue-%s", var.environment)
+  visibility_timeout_seconds = 60
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.blogging_event_deadletter.arn
     maxReceiveCount     = 4
