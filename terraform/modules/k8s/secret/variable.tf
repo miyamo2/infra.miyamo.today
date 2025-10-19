@@ -168,3 +168,9 @@ variable "service_name_read_model_updater" {
   type    = string
   default = "read_model_updater"
 }
+
+variable "blogging_event_sqs_url" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}

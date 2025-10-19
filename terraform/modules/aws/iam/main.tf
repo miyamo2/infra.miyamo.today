@@ -62,6 +62,16 @@ data "aws_iam_policy_document" "this" {
     ]
     effect = "Allow"
   }
+  statement {
+    resources = [
+      var.blogging_event_sqs_arn
+    ]
+    actions = [
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+    ]
+    effect = "Allow"
+  }
 }
 
 resource "aws_iam_user_policy" "this" {

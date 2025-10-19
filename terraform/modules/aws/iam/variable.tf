@@ -20,3 +20,9 @@ variable "blogging_events_table_stream_arn" {
   nullable  = false
   sensitive = true
 }
+
+variable "blogging_event_sqs_arn" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}

@@ -132,5 +132,6 @@ resource "kubernetes_secret" "secret_read_model_updater" {
     COCKROACHDB_DSN_TAG              = var.cockroachdb_dsn_tags
     BLOG_PUBLISH_ENDPOINT            = var.blog_publish_endpoint
     GITHUB_TOKEN                     = var.github_token
+    QUEUE_URL                        = var.blogging_event_sqs_url
   }
 }

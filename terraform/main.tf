@@ -147,12 +147,25 @@ module "s3" {
   bucket_name_for_images = var.s3_bucket_for_images
 }
 
+module "sqs" {
+  source      = "./modules/aws/sqs"
+  environment = var.environment
+}
+
+module "eventbridge" {
+  source                    = "./modules/aws/eventbridge"
+  environment               = var.environment
+  blogging_event_sqs_arn    = module.sqs.blogging_event_sqs_arn
+  blogging_event_stream_arn = module.dynamodb.blogging_events_table_stream_arn
+}
+
 module "aws_iam" {
   source                           = "./modules/aws/iam"
   environment                      = var.environment
   blogging_events_table_arn        = module.dynamodb.blogging_events_table_arn
   blogging_events_table_stream_arn = module.dynamodb.blogging_events_table_stream_arn
   images_bucket_arn                = module.s3.images_bucket_arn
+  blogging_event_sqs_arn           = module.sqs.blogging_event_sqs_arn
 }
 
 module "cognito" {
@@ -184,6 +197,7 @@ module "k8s_secret" {
   github_token                                 = var.gh_token
   new_relic_config_app_name_read_model_updater = var.new_relic_config_app_name_read_model_updater
   blog_publish_endpoint                        = var.blog_publish_endpoint
+  blogging_event_sqs_url                       = module.sqs.blogging_event_queue_url
 }
 
 module "gh_secret" {
