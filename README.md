@@ -61,9 +61,7 @@ terraform apply \
 -auto-approve
 ```
 
-### 
-
-### migrate:user-and-db
+### migrate:enable-client-secure
 
 Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
 Env: KUBE_NAMESPACE=blog
@@ -71,6 +69,16 @@ Env: KUBE_CONTEXT=blogapi-miyamo-today
 
 ```sh
 kubectl apply --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -f ./migration/client-secure.yaml
+```
+
+### migrate:user-and-db
+
+Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blogapi-miyamo-today
+Required: migrate:enable-client-secure
+
+```sh
 kubectl exec --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -it cockroachdb-client-secure -- ./cockroach sql --host=cockroachdb-public --insecure \
 -e "CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;" \
 -e "CREATE USER IF NOT EXISTS miyamo2;" \
@@ -86,34 +94,29 @@ Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
 Env: KUBE_NAMESPACE=blog
 Env: KUBE_CONTEXT=blogapi-miyamo-today
 
-```sh 
-nohup kubectl port-forward service/cockroachdb-public 26257:26257 --context $KUBE_CONTEXT -n $KUBE_NAMESPACE &
+```sh
+#!/usr/bin/bash
+nohop kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE  port-forward service/cockroachdb-public 26257:26257 &
 ```
 
 ### migrate:article
 
-Inputs: KUBE_CONTEXT, KUBE_NAMESPACE, GOOSE_DRIVER, GOOSE_DBSTRING
-Env: KUBE_NAMESPACE=blog
-Env: KUBE_CONTEXT=blogapi-miyamo-today
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING
 Env: GOOSE_DRIVER=postgres
 Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/article?sslmode=disable
 
 ```sh
-nohup kubectl port-forward service/cockroachdb-public 26257:26257 --context $KUBE_CONTEXT -n $KUBE_NAMESPACE &
 cd ./migration/article
 goose up -dir ./
 ```
 
 ### migrate:tag
 
-Inputs: KUBE_CONTEXT, KUBE_NAMESPACE, GOOSE_DRIVER, GOOSE_DBSTRING
-Env: KUBE_NAMESPACE=blog
-Env: KUBE_CONTEXT=blogapi-miyamo-today
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING
 Env: GOOSE_DRIVER=postgres
 Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/tag?sslmode=disable
 
 ```sh
-nohup kubectl port-forward service/cockroachdb-public 26257:26257 --context=$KUBE_CONTEXT -n $KUBE_NAMESPACE &
 cd ./migration/tag
 goose up -dir ./
 ```

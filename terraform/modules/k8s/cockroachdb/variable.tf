@@ -10,3 +10,9 @@ variable "kubernetes_namespace" {
   nullable  = false
   sensitive = true
 }
+
+variable "kubeconfig_context" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}

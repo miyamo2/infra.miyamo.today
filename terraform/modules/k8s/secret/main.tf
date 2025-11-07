@@ -18,7 +18,7 @@ resource "terraform_data" "rollout_article_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/article-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
+    kubectl rollout restart deployment/article-service --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -44,7 +44,7 @@ resource "terraform_data" "rollout_tag_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/tag-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
+    kubectl rollout restart deployment/tag-service --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -90,7 +90,7 @@ resource "terraform_data" "rollout_federator" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/federator --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
+    kubectl rollout restart deployment/federator --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -127,7 +127,7 @@ resource "terraform_data" "rollout_blogging_event_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/blogging-event-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
+    kubectl rollout restart deployment/blogging-event-service --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }

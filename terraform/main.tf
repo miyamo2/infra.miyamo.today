@@ -25,18 +25,18 @@ provider "aws" {
 }
 
 locals {
-  is_unix = substr(abspath(path.cwd), 0, 1) == "/"
+  kubeconfig_path = pathexpand(var.kubeconfig_path)
 }
 
 provider "helm" {
   kubernetes {
-    config_path    = pathexpand(var.kubeconfig_path)
+    config_path    = local.kubeconfig_path
     config_context = var.kubeconfig_context
   }
 }
 
 provider "kubernetes" {
-  config_path    = pathexpand(var.kubeconfig_path)
+  config_path    = local.kubeconfig_path
   config_context = var.kubeconfig_context
 }
 
@@ -44,6 +44,7 @@ module "k8s_cockroachdb" {
   source               = "./modules/k8s/cockroachdb"
   sql_user_name        = var.cockroach_sql_user_name
   kubernetes_namespace = var.kubernetes_namespace
+  kubeconfig_context   = var.kubeconfig_context
 }
 
 module "dynamodb" {
