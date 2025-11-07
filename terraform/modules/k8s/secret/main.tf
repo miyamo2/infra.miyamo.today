@@ -1,6 +1,7 @@
 resource "kubernetes_secret" "secret_article_service" {
   metadata {
-    name = "secret-article-service"
+    name      = "secret-article-service"
+    namespace = var.kubernetes_namespace
   }
   data = {
     COCKROACHDB_DSN           = var.cockroachdb_dsn_articles
@@ -17,7 +18,7 @@ resource "terraform_data" "rollout_article_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/article-service
+    kubectl rollout restart deployment/article-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -25,7 +26,8 @@ resource "terraform_data" "rollout_article_service" {
 
 resource "kubernetes_secret" "secret_tag_service" {
   metadata {
-    name = "secret-tag-service"
+    name      = "secret-tag-service"
+    namespace = var.kubernetes_namespace
   }
   data = {
     COCKROACHDB_DSN           = var.cockroachdb_dsn_tags
@@ -42,7 +44,7 @@ resource "terraform_data" "rollout_tag_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/tag-service
+    kubectl rollout restart deployment/tag-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -50,7 +52,8 @@ resource "terraform_data" "rollout_tag_service" {
 
 resource "kubernetes_secret" "secret_blogging_event_service" {
   metadata {
-    name = "secret-blogging-event-service"
+    name      = "secret-blogging-event-service"
+    namespace = var.kubernetes_namespace
   }
   data = {
     SERVICE_NAME               = var.service_name_blogging_events
@@ -65,7 +68,8 @@ resource "kubernetes_secret" "secret_blogging_event_service" {
 
 resource "kubernetes_secret" "secret_federator" {
   metadata {
-    name = "secret-federator"
+    name      = "secret-federator"
+    namespace = var.kubernetes_namespace
   }
   data = {
     NEW_RELIC_CONFIG_APP_NAME      = var.new_relic_config_app_name_federator
@@ -86,7 +90,7 @@ resource "terraform_data" "rollout_federator" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/federator
+    kubectl rollout restart deployment/federator --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -94,7 +98,20 @@ resource "terraform_data" "rollout_federator" {
 
 resource "kubernetes_secret" "secret-aws-credentials" {
   metadata {
-    name = "secret-aws-credentials"
+    name      = "secret-aws-credentials"
+    namespace = var.kubernetes_namespace
+  }
+  data = {
+    AWS_ACCESS_KEY_ID     = var.aws_access_key_id
+    AWS_SECRET_ACCESS_KEY = var.aws_secret_access_key
+    AWS_REGION            = var.aws_region
+  }
+}
+
+resource "kubernetes_secret" "blog-keda-credentials" {
+  metadata {
+    name      = "blog-keda-credentials"
+    namespace = var.kubernetes_keda_namespace
   }
   data = {
     AWS_ACCESS_KEY_ID     = var.aws_access_key_id
@@ -110,7 +127,7 @@ resource "terraform_data" "rollout_blogging_event_service" {
   }
   provisioner "local-exec" {
     command    = <<EOF
-    kubectl rollout restart deployment/blogging-event-service
+    kubectl rollout restart deployment/blogging-event-service --context ${var.kubeconfig_context} -n=${var.kubernetes_namespace} 
     EOF
     on_failure = continue
   }
@@ -118,7 +135,8 @@ resource "terraform_data" "rollout_blogging_event_service" {
 
 resource "kubernetes_secret" "secret_read_model_updater" {
   metadata {
-    name = "secret-read-model-updater"
+    name      = "secret-read-model-updater"
+    namespace = var.kubernetes_namespace
   }
   data = {
     SERVICE_NAME                     = var.service_name_read_model_updater

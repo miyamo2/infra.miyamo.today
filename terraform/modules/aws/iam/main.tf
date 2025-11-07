@@ -1,6 +1,6 @@
 resource "aws_iam_user" "this" {
   name          = format("miyamo-today-api-user-%s", var.environment)
-  force_destroy = true
+  force_destroy = false
 }
 
 resource "aws_iam_access_key" "this" {

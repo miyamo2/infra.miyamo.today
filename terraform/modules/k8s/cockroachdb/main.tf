@@ -1,12 +1,14 @@
 resource "helm_release" "this" {
   name       = "cockroachdb"
   chart      = "cockroachdb"
+  namespace  = var.kubernetes_namespace
   repository = "https://charts.cockroachdb.com/"
-
+  timeout    = 600
+  wait       = false
   # see: https://github.com/cockroachdb/helm-charts/blob/master/cockroachdb/README.md#configuration
   set {
     name  = "image.tag"
-    value = "v25.3.2"
+    value = "v25.2.8"
   }
 
   set {
@@ -40,6 +42,11 @@ resource "helm_release" "this" {
   }
 
   set {
+    name  = "storage.persistentVolume.storageClass"
+    value = "longhorn"
+  }
+
+  set {
     name  = "storage.persistentVolume.size"
     value = "10Gi"
   }
@@ -47,17 +54,5 @@ resource "helm_release" "this" {
   set {
     name  = "tls.enabled"
     value = "false"
-  }
-  wait = false
-}
-
-resource "terraform_data" "client_secure" {
-  triggers_replace = {
-    plantimestamp = plantimestamp()
-  }
-  provisioner "local-exec" {
-    command = <<EOF
-      kubectl apply -f client-secure.yaml
-    EOF
   }
 }
