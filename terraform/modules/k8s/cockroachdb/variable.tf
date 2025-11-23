@@ -8,7 +8,6 @@ variable "sql_user_name" {
 variable "kubernetes_namespace" {
   type      = string
   nullable  = false
-  sensitive = true
 }
 
 variable "kubeconfig_context" {

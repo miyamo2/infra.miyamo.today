@@ -172,7 +172,6 @@ variable "blogging_event_sqs_url" {
 variable "kubernetes_namespace" {
   type      = string
   nullable  = false
-  sensitive = true
 }
 
 variable "kubeconfig_context" {
@@ -184,6 +183,5 @@ variable "kubeconfig_context" {
 variable "kubernetes_keda_namespace" {
   type      = string
   nullable  = false
-  sensitive = true
   default   = "keda"
 }

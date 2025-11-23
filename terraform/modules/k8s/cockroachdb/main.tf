@@ -18,7 +18,7 @@ resource "helm_release" "this" {
 
   set {
     name  = "statefulset.resources.requests.memory"
-    value = "512Mi"
+    value = "768Mi"
   }
 
   set {
@@ -28,7 +28,7 @@ resource "helm_release" "this" {
 
   set {
     name  = "statefulset.resources.limits.memory"
-    value = "1024Mi"
+    value = "768Mi"
   }
 
   set {
@@ -62,15 +62,15 @@ resource "helm_release" "this" {
   }
 }
 
-resource "terraform_data" "patch_subdomain" {
-  triggers_replace = {
-    manifest   = helm_release.this.manifest
-    patch_file = filebase64("${path.module}/patch_subdomain.yaml")
-  }
-  provisioner "local-exec" {
-    command = <<EOF
-    kubectl --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} patch --type merge statefulset cockroachdb --patch-file ${path.module}/patch_subdomain.yaml
-    kubectl --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} rollout restart statefulset/cockroachdb
-    EOF
-  }
-}
+#resource "terraform_data" "patch_subdomain" {
+#  triggers_replace = {
+#    manifest   = helm_release.this.manifest
+#    patch_file = filebase64("${path.module}/patch_subdomain.yaml")
+#  }
+#  provisioner "local-exec" {
+#    command = <<EOF
+#    kubectl --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} patch --type merge statefulset cockroachdb --patch-file ${path.module}/patch_subdomain.yaml
+#    kubectl --context ${var.kubeconfig_context} -n ${var.kubernetes_namespace} rollout restart statefulset/cockroachdb
+#    EOF
+#  }
+#}

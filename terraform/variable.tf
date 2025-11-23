@@ -84,5 +84,4 @@ variable "blog_publish_endpoint" {
 variable "kubernetes_namespace" {
   type      = string
   nullable  = false
-  sensitive = true
 }
