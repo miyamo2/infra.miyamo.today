@@ -18,11 +18,11 @@ Cloud infrastructure for `miyamo.today`.
 ```sh
 scp <username>@<kubernetes server>:<path to cluster certificate authority data> ./
 scp <username>@<kubernetes server>:<path to certificate certificated by the csr signer> ./
-scp <username>@<kubernetes server>:<path to public key> ./
+scp <username>@<kubernetes server>:<path to private key> ./
 
 kubectl config set-cluster <any-cluster-name> --server=https://<kubernetes server ip>:6443 --certificate-authority=<path to cluster certificate authority data> --embed-certs=true
-kubectl config set-credentials <any-user-name> --client-key=<path to public key> --client-certificate=<path to certificate certificated by the csr signer> --embed-certs=true
-kubectl config set-context <any-context-name> --cluster=<any-cluster-name> --namespace=<namespace> --user=<user-name>
+kubectl config set-credentials bloguser --client-key=<path to private key> --client-certificate=<path to certificate certificated by the csr signer> --embed-certs=true
+kubectl config set-context blog@bloguser --cluster=<any-cluster-name> --namespace=blog --user=bloguser
 ```
 
 ## Tasks
@@ -56,26 +56,25 @@ terraform plan \
 
 ```sh
 cd ./terraform
-terraform apply \
--var-file=tfvars.json \
--auto-approve
+terraform apply -var-file=tfvars.json --auto-approve
 ```
 
 ### migrate:enable-client-secure
 
 Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
 Env: KUBE_NAMESPACE=blog
-Env: KUBE_CONTEXT=blogapi-miyamo-today
+Env: KUBE_CONTEXT=blog@bloguser
 
 ```sh
 kubectl apply --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -f ./migration/client-secure.yaml
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE wait  --timeout=120s --for=condition=ready pod cockroachdb-client-secure
 ```
 
 ### migrate:user-and-db
 
 Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
 Env: KUBE_NAMESPACE=blog
-Env: KUBE_CONTEXT=blogapi-miyamo-today
+Env: KUBE_CONTEXT=blog@bloguser
 Required: migrate:enable-client-secure
 
 ```sh
@@ -88,35 +87,30 @@ kubectl exec --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -it cockroachdb-client-s
 -e "GRANT ALL ON DATABASE tag TO goose_user WITH GRANT OPTION;" 
 ```
 
-### migrate:port-forward
-
-Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
-Env: KUBE_NAMESPACE=blog
-Env: KUBE_CONTEXT=blogapi-miyamo-today
-
-```sh
-#!/usr/bin/bash
-nohop kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE  port-forward service/cockroachdb-public 26257:26257 &
-```
-
 ### migrate:article
 
-Inputs: GOOSE_DRIVER, GOOSE_DBSTRING
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING, KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
 Env: GOOSE_DRIVER=postgres
 Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/article?sslmode=disable
 
 ```sh
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE port-forward service/cockroachdb-public 26257:26257 &
 cd ./migration/article
 goose up -dir ./
 ```
 
 ### migrate:tag
 
-Inputs: GOOSE_DRIVER, GOOSE_DBSTRING
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING, KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
 Env: GOOSE_DRIVER=postgres
 Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/tag?sslmode=disable
 
 ```sh
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE port-forward service/cockroachdb-public 26257:26257 &
 cd ./migration/tag
 goose up -dir ./
 ```
