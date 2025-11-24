@@ -170,8 +170,8 @@ variable "blogging_event_sqs_url" {
 }
 
 variable "kubernetes_namespace" {
-  type      = string
-  nullable  = false
+  type     = string
+  nullable = false
 }
 
 variable "kubeconfig_context" {
