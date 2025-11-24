@@ -2,10 +2,6 @@ terraform {
   required_version = ">= 1.11.0"
 
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 5.0"
-    }
     aws = {
       source  = "hashicorp/aws"
       version = "5.87.0"
@@ -18,19 +14,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "2.14.0"
     }
-    cockroach = {
-      source  = "cockroachdb/cockroach"
-      version = "1.11.2"
-    }
   }
   backend "s3" {
     region = "ap-northeast-1"
   }
-}
-
-provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
 }
 
 provider "aws" {
@@ -38,103 +25,27 @@ provider "aws" {
 }
 
 locals {
-  is_unix = substr(abspath(path.cwd), 0, 1) == "/"
-}
-
-provider "cockroach" {
-  apikey = var.cockroach_api_key
-}
-
-module "cockroach" {
-  source            = "./modules/cockroach"
-  cluster_name      = var.cockroach_cluster_name
-  region            = var.cockroach_region
-  sql_user_name     = var.cockroach_sql_user_name
-  sql_user_password = var.cockroach_sql_user_password
-  cloud_provider    = var.cockroach_cloud_provider
-  cockroach_api_key = var.cockroach_api_key
-  plan              = var.cockroach_plan
-}
-
-module "network" {
-  source       = "./modules/gcp/network"
-  project_id   = var.gcp_project_id
-  vpc_name     = "blogapi-miyamo-today-vpc"
-  network_name = "blogapi-miyamo-today-network"
-  subnet_name  = "blogapi-miyamo-today-subnet"
-}
-
-module "gke" {
-  source       = "./modules/gcp/gke"
-  project_id   = var.gcp_project_id
-  zone         = var.zone
-  network_name = module.network.network_name
-  subnet_name  = module.network.subnet_name
-  cluster_name = var.gke_cluster_name
-  node_count   = var.gke_node_count
-  machine_type = var.gke_machine_type
+  kubeconfig_path = pathexpand(var.kubeconfig_path)
 }
 
 provider "helm" {
   kubernetes {
-    config_path    = pathexpand(var.kubeconfig_path)
-    config_context = module.gke.config_context
+    config_path    = local.kubeconfig_path
+    config_context = var.kubeconfig_context
   }
 }
 
 provider "kubernetes" {
-  config_path    = pathexpand(var.kubeconfig_path)
-  config_context = module.gke.config_context
-}
-
-module "k8s_ingress" {
-  source     = "./modules/k8s/ingress"
-  depends_on = [module.gke]
-}
-
-module "nat" {
-  source       = "./modules/gcp/nat"
-  project_id   = var.gcp_project_id
-  region       = var.gcp_region
-  zone         = var.zone
-  network      = module.network.network_name
-  subnet       = module.network.subnet_self_link
-  node_tag     = module.gke.node_tag
-  cluster_name = module.gke.cluster_name
-  domain_names = var.domain_names
-  depends_on   = [module.k8s_ingress]
-}
-
-module "k8s_descheduler" {
-  source     = "./modules/k8s/descheduler"
-  depends_on = [module.nat]
-}
-
-module "k8s_argocd" {
-  source         = "./modules/k8s/argocd"
-  depends_on     = [module.nat]
-  config_context = module.gke.config_context
+  config_path    = local.kubeconfig_path
+  config_context = var.kubeconfig_context
 }
 
 module "k8s_cockroachdb" {
-  source         = "./modules/k8s/cockroachdb"
-  config_context = module.gke.config_context
-  sql_user_name  = var.cockroach_sql_user_name
-  depends_on     = [module.gke]
+  source               = "./modules/k8s/cockroachdb"
+  sql_user_name        = var.cockroach_sql_user_name
+  kubernetes_namespace = var.kubernetes_namespace
+  kubeconfig_context   = var.kubeconfig_context
 }
-
-module "k8s_keda" {
-  source     = "./modules/k8s/keda"
-  depends_on = [module.gke]
-}
-
-module "k8s_newrelic" {
-  source         = "./modules/k8s/newrelic"
-  license_key    = var.new_relic_config_license_key
-  config_context = module.gke.config_context
-  depends_on     = [module.gke]
-}
-
 
 module "dynamodb" {
   source       = "./modules/aws/dynamodb"
@@ -175,7 +86,6 @@ module "cognito" {
 
 module "k8s_secret" {
   source                                       = "./modules/k8s/secret"
-  config_context                               = module.gke.config_context
   cdn_host                                     = var.cdn_host
   new_relic_config_app_name_articles           = var.new_relic_config_app_name_articles
   new_relic_config_app_name_blogging_event     = var.new_relic_config_app_name_blogging_event
@@ -198,15 +108,6 @@ module "k8s_secret" {
   new_relic_config_app_name_read_model_updater = var.new_relic_config_app_name_read_model_updater
   blog_publish_endpoint                        = var.blog_publish_endpoint
   blogging_event_sqs_url                       = module.sqs.blogging_event_queue_url
-}
-
-module "gh_secret" {
-  source                      = "./modules/github/secret"
-  app_id                      = var.gh_app_id
-  installation_id             = var.gh_installation_id
-  secret                      = var.gh_secret
-  application_repository_name = var.application_repository_name
-  manifest_repository_name    = var.manifest_repository_name
-  gcp_project_id              = var.gcp_project_id
-  gcp_region                  = var.gcp_region
+  kubeconfig_context                           = var.kubeconfig_context
+  kubernetes_namespace                         = var.kubernetes_namespace
 }

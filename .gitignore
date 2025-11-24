@@ -37,3 +37,7 @@ terraform.rc
 tfvars*
 
 .terraform.lock.hcl
+
+*.crt
+*.csr
+*.key

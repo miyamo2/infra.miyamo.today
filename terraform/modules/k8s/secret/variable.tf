@@ -1,9 +1,3 @@
-variable "config_context" {
-  type      = string
-  nullable  = false
-  sensitive = true
-}
-
 variable "cockroachdb_dsn_articles" {
   type      = string
   nullable  = false
@@ -100,14 +94,14 @@ variable "port_federator" {
 }
 
 variable "aws_access_key_id" {
-  type      = string
-  nullable  = false
+  type = string
+
   sensitive = true
 }
 
 variable "aws_secret_access_key" {
-  type      = string
-  nullable  = false
+  type = string
+
   sensitive = true
 }
 
@@ -173,4 +167,21 @@ variable "blogging_event_sqs_url" {
   type      = string
   nullable  = false
   sensitive = true
+}
+
+variable "kubernetes_namespace" {
+  type     = string
+  nullable = false
+}
+
+variable "kubeconfig_context" {
+  type      = string
+  nullable  = false
+  sensitive = true
+}
+
+variable "kubernetes_keda_namespace" {
+  type      = string
+  nullable  = false
+  default   = "keda"
 }

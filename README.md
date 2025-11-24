@@ -2,55 +2,115 @@
 
 Cloud infrastructure for `miyamo.today`.
 
+## Prerequirements
+
+1. Prepare Kubernetes Cluster
+2. Install ArgoCD on Cluster
+3. Install Cloudflare Tunnel Ingress Controller on Cluster
+4. Install longhorn on Cluster
+5. Create namespace, user, role and rolebinding on Cluster
+6. Install kubectl on your machine
+7. Install xc on your machine
+8. Install goose on your machine
+
 ## Setup
 
+```sh
+scp <username>@<kubernetes server>:<path to cluster certificate authority data> ./
+scp <username>@<kubernetes server>:<path to certificate certificated by the csr signer> ./
+scp <username>@<kubernetes server>:<path to private key> ./
 
-### Install components
-
-```sh 
-gcloud components install gke-gcloud-auth-plugin
+kubectl config set-cluster <any-cluster-name> --server=https://<kubernetes server ip>:6443 --certificate-authority=<path to cluster certificate authority data> --embed-certs=true
+kubectl config set-credentials bloguser --client-key=<path to private key> --client-certificate=<path to certificate certificated by the csr signer> --embed-certs=true
+kubectl config set-context blog@bloguser --cluster=<any-cluster-name> --namespace=blog --user=bloguser
 ```
 
-### Login
+## Tasks
+
+We recommend that this section be run with [xc](https://github.com/joerdav/xc)
+
+### tf:init
+
+Inputs: BUCKET_NAME,STATE_KEY
 
 ```sh
-gcloud auth application-default login
+terraform init -backend-config="bucket=$BUCKET_NAME" -backend-config="key=$STATE_KEY/terraform.tfstate" -upgrade
 ```
 
-### Create a new project
+### tf:fmt
 
 ```sh
-gcloud projects create <PROJECT_ID>
-gcloud config set project <PROJECT_ID>
+cd ./terraform
+terraform fmt --recursive
 ```
 
-### Enable billing
-
-#### see available billing account
+### tf:plan
 
 ```sh
-gcloud billing accounts list
-# output
-ACCOUNT_ID: <BILLING_ACCOUNT_ID>
-NAME: <BILLING_ACCOUNT_NAME>
-OPEN: <TRUE|FALSE>
-MASTER_ACCOUNT_ID: <MASTER_ACCOUNT_ID>
+cd ./terraform
+terraform plan \
+-var-file=tfvars.json
 ```
 
-#### link billing account to the project
+### tf:apply
 
 ```sh
-gcloud alpha billing projects link <PROJECT_ID> --billing-account="<BILLING_ACCOUNT_ID>"
+cd ./terraform
+terraform apply -var-file=tfvars.json --auto-approve
 ```
 
-#### enable api
+### migrate:enable-client-secure
+
+Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
 
 ```sh
-gcloud services enable iam.googleapis.com container.googleapis.com compute.googleapis.com artifactregistry.googleapis.com 
+kubectl apply --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -f ./migration/client-secure.yaml
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE wait  --timeout=120s --for=condition=ready pod cockroachdb-client-secure
 ```
 
-### terraform init
+### migrate:user-and-db
+
+Inputs: KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
+Required: migrate:enable-client-secure
 
 ```sh
-terraform init -backend-config="bucket=<BUCKET_NAME>" -backend-config="key=<KEY>/terraform.tfstate"
+kubectl exec --context $KUBE_CONTEXT -n $KUBE_NAMESPACE -it cockroachdb-client-secure -- ./cockroach sql --host=cockroachdb-public --insecure \
+-e "CREATE USER IF NOT EXISTS goose_user WITH MODIFYCLUSTERSETTING;" \
+-e "CREATE USER IF NOT EXISTS miyamo2;" \
+-e "CREATE DATABASE IF NOT EXISTS article;" \
+-e "CREATE DATABASE IF NOT EXISTS tag;" \
+-e "GRANT ALL ON DATABASE article TO goose_user WITH GRANT OPTION;" \
+-e "GRANT ALL ON DATABASE tag TO goose_user WITH GRANT OPTION;" 
+```
+
+### migrate:article
+
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING, KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
+Env: GOOSE_DRIVER=postgres
+Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/article?sslmode=disable
+
+```sh
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE port-forward service/cockroachdb-public 26257:26257 &
+cd ./migration/article
+goose up -dir ./
+```
+
+### migrate:tag
+
+Inputs: GOOSE_DRIVER, GOOSE_DBSTRING, KUBE_CONTEXT, KUBE_NAMESPACE
+Env: KUBE_NAMESPACE=blog
+Env: KUBE_CONTEXT=blog@bloguser
+Env: GOOSE_DRIVER=postgres
+Env: GOOSE_DBSTRING=postgresql://goose_user@localhost:26257/tag?sslmode=disable
+
+```sh
+kubectl --context $KUBE_CONTEXT -n $KUBE_NAMESPACE port-forward service/cockroachdb-public 26257:26257 &
+cd ./migration/tag
+goose up -dir ./
 ```
