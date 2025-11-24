@@ -108,18 +108,6 @@ resource "kubernetes_secret" "secret-aws-credentials" {
   }
 }
 
-resource "kubernetes_secret" "blog-keda-credentials" {
-  metadata {
-    name      = "blog-keda-credentials"
-    namespace = var.kubernetes_keda_namespace
-  }
-  data = {
-    AWS_ACCESS_KEY_ID     = var.aws_access_key_id
-    AWS_SECRET_ACCESS_KEY = var.aws_secret_access_key
-    AWS_REGION            = var.aws_region
-  }
-}
-
 resource "terraform_data" "rollout_blogging_event_service" {
   triggers_replace = {
     secret_blogging_event_service = kubernetes_secret.secret_blogging_event_service.data
