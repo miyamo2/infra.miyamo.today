@@ -179,3 +179,9 @@ variable "kubeconfig_context" {
   nullable  = false
   sensitive = true
 }
+
+variable "kubernetes_keda_namespace" {
+  type      = string
+  nullable  = false
+  default   = "keda"
+}
